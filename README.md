@@ -24,7 +24,7 @@ docker run -d --name highseas-streaming -p 6969:6969 --restart unless-stopped ca
 
 ```bash
 # Download and run the deployment script
-curl -sSL https://raw.githubusercontent.com/caullen/stremio-netflix/main/deploy.sh | bash
+curl -sSL https://raw.githubusercontent.com/CaullenOmdahl/HighSeas/master/deploy.sh | bash
 ```
 
 **Access the application at: http://localhost:6969**
@@ -47,15 +47,15 @@ docker run -d \
 ### Option 2: Docker Compose
 ```bash
 # Clone repository and use docker-compose
-git clone https://github.com/caullen/stremio-netflix.git
-cd stremio-netflix
+git clone https://github.com/CaullenOmdahl/HighSeas.git
+cd HighSeas
 docker-compose up -d
 ```
 
 ### Option 3: Automated Script
 ```bash
 # Download deployment script
-wget https://raw.githubusercontent.com/caullen/stremio-netflix/main/deploy.sh
+wget https://raw.githubusercontent.com/CaullenOmdahl/HighSeas/master/deploy.sh
 chmod +x deploy.sh
 
 # Edit the script to set your Docker Hub username
@@ -178,8 +178,8 @@ To build and run locally:
 
 ```bash
 # Clone repository
-git clone https://github.com/caullen/stremio-netflix.git
-cd stremio-netflix
+git clone https://github.com/CaullenOmdahl/HighSeas.git
+cd HighSeas
 
 # Install dependencies
 npm install
