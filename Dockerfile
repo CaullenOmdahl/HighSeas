@@ -1,5 +1,5 @@
-# Use Node.js 18 Alpine as base image for smaller size
-FROM node:18-alpine AS builder
+# Use Node.js 20 Alpine as base image for smaller size
+FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies (including dev dependencies for build)
-RUN npm ci --ignore-scripts
+RUN npm install --ignore-scripts
 
 # Copy source code
 COPY . .
@@ -17,10 +17,10 @@ COPY . .
 RUN npm run build
 
 # Clean up dev dependencies after build
-RUN npm ci --only=production --ignore-scripts && npm cache clean --force
+RUN npm install --only=production --ignore-scripts && npm cache clean --force
 
 # Production stage
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 
 # Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init

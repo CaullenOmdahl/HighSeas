@@ -29,6 +29,7 @@ declare module '$env/static/private' {
 	export const SHELL: string;
 	export const npm_command: string;
 	export const SESSION_MANAGER: string;
+	export const COREPACK_ENABLE_AUTO_PIN: string;
 	export const npm_config_userconfig: string;
 	export const COLORTERM: string;
 	export const npm_config_cache: string;
@@ -36,8 +37,8 @@ declare module '$env/static/private' {
 	export const HISTCONTROL: string;
 	export const XDG_MENU_PREFIX: string;
 	export const TERM_PROGRAM_VERSION: string;
-	export const HISTSIZE: string;
 	export const HOSTNAME: string;
+	export const HISTSIZE: string;
 	export const NODE: string;
 	export const SSH_AUTH_SOCK: string;
 	export const MEMORY_PRESSURE_WRITE: string;
@@ -50,16 +51,18 @@ declare module '$env/static/private' {
 	export const GPG_TTY: string;
 	export const EDITOR: string;
 	export const PWD: string;
-	export const LOGNAME: string;
 	export const XDG_SESSION_DESKTOP: string;
+	export const LOGNAME: string;
 	export const XDG_SESSION_TYPE: string;
 	export const npm_config_init_module: string;
 	export const SYSTEMD_EXEC_PID: string;
+	export const VIPSHOME: string;
 	export const _: string;
 	export const XAUTHORITY: string;
 	export const VSCODE_GIT_ASKPASS_NODE: string;
 	export const ENABLE_IDE_INTEGRATION: string;
 	export const GJS_DEBUG_TOPICS: string;
+	export const CLAUDECODE: string;
 	export const GDM_LANG: string;
 	export const HOME: string;
 	export const USERNAME: string;
@@ -76,8 +79,8 @@ declare module '$env/static/private' {
 	export const CHROME_DESKTOP: string;
 	export const npm_lifecycle_script: string;
 	export const GJS_DEBUG_OUTPUT: string;
-	export const MOZ_GMP_PATH: string;
 	export const NVM_DIR: string;
+	export const MOZ_GMP_PATH: string;
 	export const VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
 	export const GNOME_SETUP_DISPLAY: string;
 	export const CLAUDE_CODE_SSE_PORT: string;
@@ -93,10 +96,13 @@ declare module '$env/static/private' {
 	export const npm_lifecycle_event: string;
 	export const SHLVL: string;
 	export const NVM_CD_FLAGS: string;
+	export const GIT_EDITOR: string;
 	export const QT_IM_MODULE: string;
 	export const npm_config_user_agent: string;
+	export const OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: string;
 	export const npm_execpath: string;
 	export const XDG_RUNTIME_DIR: string;
+	export const CLAUDE_CODE_ENTRYPOINT: string;
 	export const DEBUGINFOD_URLS: string;
 	export const npm_package_json: string;
 	export const DEBUGINFOD_IMA_CERT_PATH: string;
@@ -111,14 +117,13 @@ declare module '$env/static/private' {
 	export const ORIGINAL_XDG_CURRENT_DESKTOP: string;
 	export const DBUS_SESSION_BUS_ADDRESS: string;
 	export const npm_config_global_prefix: string;
-	export const MAIL: string;
 	export const NVM_BIN: string;
+	export const MAIL: string;
 	export const GIO_LAUNCHED_DESKTOP_FILE_PID: string;
 	export const npm_node_execpath: string;
 	export const npm_config_engine_strict: string;
 	export const GIO_LAUNCHED_DESKTOP_FILE: string;
 	export const TERM_PROGRAM: string;
-	export const NODE_ENV: string;
 }
 
 /**
@@ -153,6 +158,7 @@ declare module '$env/dynamic/private' {
 		SHELL: string;
 		npm_command: string;
 		SESSION_MANAGER: string;
+		COREPACK_ENABLE_AUTO_PIN: string;
 		npm_config_userconfig: string;
 		COLORTERM: string;
 		npm_config_cache: string;
@@ -160,8 +166,8 @@ declare module '$env/dynamic/private' {
 		HISTCONTROL: string;
 		XDG_MENU_PREFIX: string;
 		TERM_PROGRAM_VERSION: string;
-		HISTSIZE: string;
 		HOSTNAME: string;
+		HISTSIZE: string;
 		NODE: string;
 		SSH_AUTH_SOCK: string;
 		MEMORY_PRESSURE_WRITE: string;
@@ -174,16 +180,18 @@ declare module '$env/dynamic/private' {
 		GPG_TTY: string;
 		EDITOR: string;
 		PWD: string;
-		LOGNAME: string;
 		XDG_SESSION_DESKTOP: string;
+		LOGNAME: string;
 		XDG_SESSION_TYPE: string;
 		npm_config_init_module: string;
 		SYSTEMD_EXEC_PID: string;
+		VIPSHOME: string;
 		_: string;
 		XAUTHORITY: string;
 		VSCODE_GIT_ASKPASS_NODE: string;
 		ENABLE_IDE_INTEGRATION: string;
 		GJS_DEBUG_TOPICS: string;
+		CLAUDECODE: string;
 		GDM_LANG: string;
 		HOME: string;
 		USERNAME: string;
@@ -200,8 +208,8 @@ declare module '$env/dynamic/private' {
 		CHROME_DESKTOP: string;
 		npm_lifecycle_script: string;
 		GJS_DEBUG_OUTPUT: string;
-		MOZ_GMP_PATH: string;
 		NVM_DIR: string;
+		MOZ_GMP_PATH: string;
 		VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
 		GNOME_SETUP_DISPLAY: string;
 		CLAUDE_CODE_SSE_PORT: string;
@@ -217,10 +225,13 @@ declare module '$env/dynamic/private' {
 		npm_lifecycle_event: string;
 		SHLVL: string;
 		NVM_CD_FLAGS: string;
+		GIT_EDITOR: string;
 		QT_IM_MODULE: string;
 		npm_config_user_agent: string;
+		OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: string;
 		npm_execpath: string;
 		XDG_RUNTIME_DIR: string;
+		CLAUDE_CODE_ENTRYPOINT: string;
 		DEBUGINFOD_URLS: string;
 		npm_package_json: string;
 		DEBUGINFOD_IMA_CERT_PATH: string;
@@ -235,14 +246,13 @@ declare module '$env/dynamic/private' {
 		ORIGINAL_XDG_CURRENT_DESKTOP: string;
 		DBUS_SESSION_BUS_ADDRESS: string;
 		npm_config_global_prefix: string;
-		MAIL: string;
 		NVM_BIN: string;
+		MAIL: string;
 		GIO_LAUNCHED_DESKTOP_FILE_PID: string;
 		npm_node_execpath: string;
 		npm_config_engine_strict: string;
 		GIO_LAUNCHED_DESKTOP_FILE: string;
 		TERM_PROGRAM: string;
-		NODE_ENV: string;
 		[key: `PUBLIC_${string}`]: undefined;
 		[key: `${string}`]: string | undefined;
 	}
