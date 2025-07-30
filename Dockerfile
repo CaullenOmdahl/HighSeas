@@ -7,14 +7,17 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production --ignore-scripts
+# Install all dependencies (including dev dependencies for build)
+RUN npm ci --ignore-scripts
 
 # Copy source code
 COPY . .
 
 # Build the application
 RUN npm run build
+
+# Clean up dev dependencies after build
+RUN npm ci --only=production --ignore-scripts && npm cache clean --force
 
 # Production stage
 FROM node:18-alpine AS runner
