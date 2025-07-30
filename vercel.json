@@ -1,0 +1,11 @@
+{
+	"framework": "svelte",
+	"buildCommand": "npm run build",
+	"outputDirectory": "build",
+	"installCommand": "npm install",
+	"devCommand": "npm run dev -- --port $PORT",
+	"env": {
+		"TMDB_API_KEY": "@tmdb-api-key",
+		"DEFAULT_ADDONS": "@default-addons"
+	}
+}

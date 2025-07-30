@@ -1,0 +1,47 @@
+# Ignore node_modules (will be installed in container)
+node_modules
+
+# Ignore development files
+.env
+.env.*
+!.env.example
+
+# Ignore build artifacts
+.svelte-kit
+build
+
+# Ignore development tools
+.vscode
+.idea
+*.swp
+*.swo
+
+# Ignore logs
+logs
+*.log
+npm-debug.log*
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore git
+.git
+.gitignore
+
+# Ignore documentation
+README.md
+*.md
+
+# Ignore test files
+tests
+test
+*.test.js
+*.spec.js
+
+# Ignore coverage
+coverage
+
+# Ignore temporary files
+tmp
+temp

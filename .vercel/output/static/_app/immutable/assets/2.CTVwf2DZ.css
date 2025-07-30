@@ -1,0 +1,7 @@
+.scrollbar-hide.svelte-12vxkih {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+.scrollbar-hide.svelte-12vxkih::-webkit-scrollbar {
+	display: none;
+}

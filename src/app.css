@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+/* VideoJS custom styles */
+@import 'video.js/dist/video-js.css';
+
+/* Netflix-like global styles */
+body {
+	margin: 0;
+	background-color: #141414;
+	color: white;
+	font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
