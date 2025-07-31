@@ -1,0 +1,1 @@
+export const env={"PUBLIC_APP_NAME":"HighSeas","PUBLIC_APP_VERSION":"1.0.0","PUBLIC_SECURITY_HEADERS":"true"}

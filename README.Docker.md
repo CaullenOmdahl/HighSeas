@@ -136,6 +136,7 @@ docker-compose logs -f        # Follow logs
 ## 🛠️ Troubleshooting
 
 ### Container Won't Start
+
 ```bash
 # Check logs
 docker logs highseas-streaming
@@ -150,6 +151,7 @@ docker-compose up -d
 ```
 
 ### Port Already in Use
+
 ```bash
 # Check what's using port 6969
 sudo lsof -i :6969
@@ -161,6 +163,7 @@ ports:
 ```
 
 ### Memory Issues
+
 ```bash
 # Check container resources
 docker stats highseas-streaming
@@ -183,6 +186,7 @@ deploy:
 ## 📈 Performance Tuning
 
 ### Resource Limits
+
 ```yaml
 # docker-compose.yml
 deploy:
@@ -196,12 +200,13 @@ deploy:
 ```
 
 ### Logging Configuration
+
 ```yaml
 logging:
-  driver: "json-file"
+  driver: 'json-file'
   options:
-    max-size: "10m"
-    max-file: "3"
+    max-size: '10m'
+    max-file: '3'
 ```
 
 ## 🌐 Access Points

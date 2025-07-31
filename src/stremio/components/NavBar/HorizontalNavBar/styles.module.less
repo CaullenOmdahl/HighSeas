@@ -1,0 +1,151 @@
+// Copyright (C) 2017-2024 Smart code 203358507 - Modified for HighSeas
+
+@import (reference) '../../../common/screen-sizes.less';
+
+.horizontal-nav-bar-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--horizontal-nav-bar-size);
+    background: linear-gradient(41deg, var(--primary-background-color) 0%, var(--secondary-background-color) 100%);
+    border-bottom: 1px solid var(--overlay-color);
+    padding: 0 1.5rem;
+    position: relative;
+    z-index: 10;
+    overflow: hidden;
+}
+
+.nav-left,
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 0 0 auto;
+}
+
+.nav-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    max-width: 600px;
+    margin: 0 2rem;
+}
+
+.brand-logo {
+    display: flex;
+    align-items: center;
+}
+
+.brand-text {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--primary-accent-color);
+    letter-spacing: -0.025em;
+    overflow: hidden;
+}
+
+.search-container {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 1rem;
+    color: var(--color-placeholder-text);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 3rem;
+    background-color: var(--overlay-color);
+    border: 1px solid var(--color-placeholder);
+    border-radius: 2rem;
+    color: var(--primary-foreground-color);
+    font-size: 0.875rem;
+    transition: all 0.2s ease-out;
+    outline: none;
+    overflow: hidden;
+
+    &::placeholder {
+        color: var(--color-placeholder-text);
+        overflow: hidden;
+    }
+
+    &:focus {
+        border-color: var(--primary-accent-color);
+        box-shadow: 0 0 0 2px rgba(123, 91, 245, 0.2);
+        background-color: var(--secondary-background-color);
+    }
+}
+
+.search-container.focused .search-input {
+    padding-right: 5rem;
+}
+
+.search-button {
+    position: absolute;
+    right: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    border-radius: 1.5rem;
+    background-color: var(--primary-accent-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease-out;
+    overflow: hidden;
+
+    &:hover {
+        background-color: rgba(123, 91, 245, 0.8);
+    }
+}
+
+.nav-button {
+    padding: 0.75rem;
+    border-radius: var(--border-radius);
+    color: var(--primary-foreground-color);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+
+    &:hover,
+    &:focus {
+        background-color: var(--overlay-color);
+        outline: none;
+    }
+}
+
+// Mobile adjustments
+@media only screen and (max-width: @minimum) {
+    .horizontal-nav-bar-container {
+        padding: 0 1rem;
+    }
+
+    .nav-center {
+        margin: 0 1rem;
+    }
+
+    .brand-text {
+        font-size: 1.25rem;
+    }
+
+    .search-input {
+        font-size: 0.875rem;
+        padding: 0.625rem 1rem 0.625rem 2.5rem;
+    }
+
+    .nav-button {
+        padding: 0.5rem;
+    }
+}

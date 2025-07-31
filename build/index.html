@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="theme-color" content="#000000" />
+		<meta
+			name="description"
+			content="HighSeas - Premium streaming experience with access to movies and TV shows"
+		/>
+		
+		<link rel="modulepreload" href="/_app/immutable/entry/start.FlKQ4r4F.js">
+		<link rel="modulepreload" href="/_app/immutable/chunks/DFhjXLXr.js">
+		<link rel="modulepreload" href="/_app/immutable/chunks/DXSXZ86w.js">
+		<link rel="modulepreload" href="/_app/immutable/entry/app.B5F9p984.js">
+		<link rel="modulepreload" href="/_app/immutable/chunks/D9Z9MdNV.js">
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">
+			<script>
+				{
+					__sveltekit_pi78hg = {
+						base: ""
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("/_app/immutable/entry/start.FlKQ4r4F.js"),
+						import("/_app/immutable/entry/app.B5F9p984.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element);
+					});
+				}
+			</script>
+		</div>
+		<style>
+			/* Keyboard navigation focus styles */
+			.keyboard-focus {
+				outline: 2px solid #dc2626 !important;
+				outline-offset: 2px !important;
+				box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.2) !important;
+			}
+		</style>
+		<script>
+			if ('serviceWorker' in navigator) {
+				window.addEventListener('load', () => {
+					navigator.serviceWorker
+						.register('/sw.js')
+						.then((registration) => {
+							console.log('SW registered: ', registration);
+						})
+						.catch((registrationError) => {
+							console.log('SW registration failed: ', registrationError);
+						});
+				});
+			}
+		</script>
+	</body>
+</html>

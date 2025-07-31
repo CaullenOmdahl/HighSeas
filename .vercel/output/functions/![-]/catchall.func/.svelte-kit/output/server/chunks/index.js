@@ -1197,10 +1197,7 @@ function destroy_effect(effect, remove_dom = true) {
 function remove_effect_dom(node, end) {
 	while (node !== null) {
 		var next =
-			node === end
-				? null
-				: /** @type {TemplateNode} */
-					/* @__PURE__ */ get_next_sibling(node);
+			node === end ? null : /** @type {TemplateNode} */ /* @__PURE__ */ get_next_sibling(node);
 		node.remove();
 		node = next;
 	}

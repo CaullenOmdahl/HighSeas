@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">HighSeas TV</string>
+    <string name="title_activity_main">HighSeas TV</string>
+    <string name="package_name">com.highseas.tv</string>
+    <string name="custom_url_scheme">com.highseas.tv</string>
+</resources>

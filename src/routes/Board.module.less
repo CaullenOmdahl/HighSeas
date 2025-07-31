@@ -1,0 +1,44 @@
+// Copyright (C) 2017-2024 Smart code 203358507 - Modified for HighSeas
+
+@import (reference) '../stremio/common/screen-sizes.less';
+
+.board-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    background-color: var(--primary-background-color);
+}
+
+.board-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 2rem 0;
+    
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+        background: var(--overlay-color);
+        border-radius: 4px;
+        
+        &:hover {
+            background: var(--color-placeholder);
+        }
+    }
+}
+
+// Mobile adjustments
+@media only screen and (max-width: @minimum) {
+    .board-content {
+        padding: 1rem 0 6rem 0; // Extra bottom padding for mobile nav
+    }
+}
