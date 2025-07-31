@@ -197,6 +197,87 @@ class StremioService {
         // For now, return empty array - this would integrate with user's viewing history
         return [];
     }
+
+    async searchContent(query: string, type?: 'movie' | 'series'): Promise<MetaItemPreview[]> {
+        if (!query.trim()) return [];
+        
+        try {
+            // Use Stremio's Cinemeta search functionality
+            const searchUrl = type 
+                ? `https://v3-cinemeta.strem.io/catalog/${type}/cinemeta-top/search=${encodeURIComponent(query)}.json`
+                : `https://v3-cinemeta.strem.io/catalog/movie/cinemeta-top/search=${encodeURIComponent(query)}.json`;
+            
+            const response = await fetch(searchUrl);
+            if (!response.ok) {
+                throw new Error(`Search failed: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            const results = data.metas || [];
+            
+            // Convert to our format
+            const searchResults: MetaItemPreview[] = results.map((meta: any) => ({
+                id: meta.id,
+                name: meta.name,
+                type: meta.type,
+                poster: meta.poster,
+                background: meta.background,
+                description: meta.description,
+                releaseInfo: meta.year || meta.releaseInfo,
+                runtime: meta.runtime,
+                genres: meta.genres,
+                imdbRating: meta.imdbRating ? parseFloat(meta.imdbRating) : undefined,
+                watched: false,
+                inLibrary: false,
+            }));
+
+            // If no type specified, also search TV series
+            if (!type) {
+                try {
+                    const seriesUrl = `https://v3-cinemeta.strem.io/catalog/series/cinemeta-top/search=${encodeURIComponent(query)}.json`;
+                    const seriesResponse = await fetch(seriesUrl);
+                    
+                    if (seriesResponse.ok) {
+                        const seriesData = await seriesResponse.json();
+                        const seriesResults = seriesData.metas || [];
+                        
+                        const seriesItems: MetaItemPreview[] = seriesResults.map((meta: any) => ({
+                            id: meta.id,
+                            name: meta.name,
+                            type: meta.type,
+                            poster: meta.poster,
+                            background: meta.background,
+                            description: meta.description,
+                            releaseInfo: meta.year || meta.releaseInfo,
+                            runtime: meta.runtime,
+                            genres: meta.genres,
+                            imdbRating: meta.imdbRating ? parseFloat(meta.imdbRating) : undefined,
+                            watched: false,
+                            inLibrary: false,
+                        }));
+                        
+                        searchResults.push(...seriesItems);
+                    }
+                } catch (error) {
+                    console.warn('Series search failed:', error);
+                }
+            }
+            
+            return searchResults.slice(0, 50); // Limit results
+            
+        } catch (error) {
+            console.error('Search failed:', error);
+            return [];
+        }
+    }
+
+    async searchMovies(query: string): Promise<MetaItemPreview[]> {
+        return this.searchContent(query, 'movie');
+    }
+
+    async searchSeries(query: string): Promise<MetaItemPreview[]> {
+        return this.searchContent(query, 'series');
+    }
 }
 
 // Create and export a singleton instance
