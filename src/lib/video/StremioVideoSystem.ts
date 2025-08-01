@@ -403,40 +403,6 @@ export class StremioVideoSystem {
     return cues;
   }
 
-  private setStream(streamUrl: string | null) {
-    if (this.currentStream === streamUrl) return;
-
-    // Destroy existing HLS instance
-    if (this.hlsInstance) {
-      this.hlsInstance.destroy();
-      this.hlsInstance = null;
-    }
-
-    this.currentStream = streamUrl;
-
-    if (!this.videoElement) {
-      if (streamUrl) {
-        this.createVideoElement();
-      }
-      return;
-    }
-
-    if (!streamUrl) {
-      this.videoElement.removeAttribute('src');
-      this.videoElement.load();
-      return;
-    }
-
-    // Check if this is an HLS stream
-    if (this.shouldUseHLS(streamUrl)) {
-      console.log('StremioVideoSystem: Setting up HLS for', streamUrl);
-      this.setupHLS(streamUrl);
-    } else {
-      console.log('StremioVideoSystem: Setting direct video src for', streamUrl);
-      this.videoElement.src = streamUrl;
-      this.videoElement.load();
-    }
-  }
 
   private shouldUseHLS(streamUrl: string): boolean {
     return streamUrl.includes('.m3u8') || 
@@ -572,7 +538,22 @@ export class StremioVideoSystem {
   private setProp(propName: keyof VideoProperties, propValue: any) {
     switch (propName) {
       case 'stream':
-        this.setStream(propValue);
+        // Use Stremio's load command pattern instead of direct stream setting
+        if (propValue) {
+          this.dispatch({
+            type: 'command',
+            commandName: 'load',
+            commandArgs: {
+              stream: { url: propValue },
+              autoplay: true
+            }
+          });
+        } else {
+          this.dispatch({
+            type: 'command',
+            commandName: 'unload'
+          });
+        }
         break;
       case 'paused':
         if (this.videoElement) {
@@ -633,8 +614,14 @@ export class StremioVideoSystem {
     }
   }
 
-  private executeCommand(commandName: string, commandArgs?: any[]) {
+  private executeCommand(commandName: string, commandArgs?: any) {
     switch (commandName) {
+      case 'load':
+        this.executeLoadCommand(commandArgs);
+        break;
+      case 'unload':
+        this.executeUnloadCommand();
+        break;
       case 'play':
         if (this.videoElement) {
           this.videoElement.play().catch(() => {});
@@ -657,6 +644,60 @@ export class StremioVideoSystem {
         }
         break;
     }
+  }
+
+  private executeLoadCommand(commandArgs: any) {
+    this.executeUnloadCommand(); // Unload any existing stream first
+    
+    if (commandArgs && commandArgs.stream && typeof commandArgs.stream.url === 'string') {
+      this.currentStream = commandArgs.stream.url;
+      
+      if (!this.videoElement) {
+        this.createVideoElement();
+      }
+      
+      console.log('StremioVideoSystem: Loading stream via load command:', this.currentStream);
+      
+      // Set video properties
+      if (this.videoElement) {
+        this.videoElement.autoplay = typeof commandArgs.autoplay === 'boolean' ? commandArgs.autoplay : true;
+        
+        if (commandArgs.time !== null && isFinite(commandArgs.time)) {
+          this.videoElement.currentTime = parseInt(commandArgs.time, 10) / 1000;
+        }
+        
+        // Check if HLS or direct video
+        if (this.shouldUseHLS(this.currentStream)) {
+          console.log('StremioVideoSystem: Setting up HLS for', this.currentStream);
+          this.setupHLS(this.currentStream);
+        } else {
+          console.log('StremioVideoSystem: Setting direct video src for', this.currentStream);
+          this.videoElement.src = this.currentStream;
+          this.videoElement.load();
+        }
+        
+        // Emit property changes
+        this.emitPropChanged('stream', this.currentStream);
+        this.emitPropChanged('loaded', false);
+        this.emitPropChanged('buffering', true);
+      }
+    }
+  }
+
+  private executeUnloadCommand() {
+    this.currentStream = null;
+    
+    if (this.hlsInstance) {
+      this.hlsInstance.destroy();
+      this.hlsInstance = null;
+    }
+    
+    if (this.videoElement) {
+      this.videoElement.removeAttribute('src');
+      this.videoElement.load();
+    }
+    
+    this.emitPropChanged('stream', null);
   }
 
   // Public method to load subtitles

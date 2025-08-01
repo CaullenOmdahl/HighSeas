@@ -1,5 +1,119 @@
 chunk-RFXM5SOW.js?v=905c193d:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
-StremioPlayer.tsx:56 StremioPlayer params: {id: 'tt26743210', streamUrl: 'https://sgp1-4.download.real-debrid.com/d/T2IR4LM5…5.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv', quality: '4K', season: null, episode: null}
-StremioPlayer.tsx:56 StremioPlayer params: {id: 'tt26743210', streamUrl: 'https://sgp1-4.download.real-debrid.com/d/T2IR4LM5…5.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv', quality: '4K', season: null, episode: null}
-StremioVideoPlayer.tsx:102 StremioVideoPlayer: Initializing video system
-StremioVideoPlayer.tsx:102 StremioVideoPlayer: Initializing video system
+StremioPlayer.tsx:120 Uncaught ReferenceError: Cannot access 'convertMagnetToStream' before initialization
+    at StremioPlayer.tsx:120:18
+    at renderWithHooks (chunk-RFXM5SOW.js?v=905c193d:11596:26)
+    at updateFunctionComponent (chunk-RFXM5SOW.js?v=905c193d:14630:28)
+    at updateSimpleMemoComponent (chunk-RFXM5SOW.js?v=905c193d:14511:18)
+    at updateMemoComponent (chunk-RFXM5SOW.js?v=905c193d:14414:22)
+    at beginWork (chunk-RFXM5SOW.js?v=905c193d:16025:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RFXM5SOW.js?v=905c193d:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-RFXM5SOW.js?v=905c193d:3705:24)
+    at invokeGuardedCallback (chunk-RFXM5SOW.js?v=905c193d:3739:39)
+    at beginWork$1 (chunk-RFXM5SOW.js?v=905c193d:19818:15)
+(anonymous) @ StremioPlayer.tsx:120
+renderWithHooks @ chunk-RFXM5SOW.js?v=905c193d:11596
+updateFunctionComponent @ chunk-RFXM5SOW.js?v=905c193d:14630
+updateSimpleMemoComponent @ chunk-RFXM5SOW.js?v=905c193d:14511
+updateMemoComponent @ chunk-RFXM5SOW.js?v=905c193d:14414
+beginWork @ chunk-RFXM5SOW.js?v=905c193d:16025
+callCallback2 @ chunk-RFXM5SOW.js?v=905c193d:3680
+invokeGuardedCallbackDev @ chunk-RFXM5SOW.js?v=905c193d:3705
+invokeGuardedCallback @ chunk-RFXM5SOW.js?v=905c193d:3739
+beginWork$1 @ chunk-RFXM5SOW.js?v=905c193d:19818
+performUnitOfWork @ chunk-RFXM5SOW.js?v=905c193d:19251
+workLoopSync @ chunk-RFXM5SOW.js?v=905c193d:19190
+renderRootSync @ chunk-RFXM5SOW.js?v=905c193d:19169
+performConcurrentWorkOnRoot @ chunk-RFXM5SOW.js?v=905c193d:18728
+workLoop @ chunk-RFXM5SOW.js?v=905c193d:197
+flushWork @ chunk-RFXM5SOW.js?v=905c193d:176
+performWorkUntilDeadline @ chunk-RFXM5SOW.js?v=905c193d:384
+Show 16 more frames
+Show less
+StremioPlayer.tsx:120 Uncaught ReferenceError: Cannot access 'convertMagnetToStream' before initialization
+    at StremioPlayer.tsx:120:18
+    at renderWithHooks (chunk-RFXM5SOW.js?v=905c193d:11596:26)
+    at updateFunctionComponent (chunk-RFXM5SOW.js?v=905c193d:14630:28)
+    at updateSimpleMemoComponent (chunk-RFXM5SOW.js?v=905c193d:14511:18)
+    at updateMemoComponent (chunk-RFXM5SOW.js?v=905c193d:14414:22)
+    at beginWork (chunk-RFXM5SOW.js?v=905c193d:16025:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RFXM5SOW.js?v=905c193d:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-RFXM5SOW.js?v=905c193d:3705:24)
+    at invokeGuardedCallback (chunk-RFXM5SOW.js?v=905c193d:3739:39)
+    at beginWork$1 (chunk-RFXM5SOW.js?v=905c193d:19818:15)
+(anonymous) @ StremioPlayer.tsx:120
+renderWithHooks @ chunk-RFXM5SOW.js?v=905c193d:11596
+updateFunctionComponent @ chunk-RFXM5SOW.js?v=905c193d:14630
+updateSimpleMemoComponent @ chunk-RFXM5SOW.js?v=905c193d:14511
+updateMemoComponent @ chunk-RFXM5SOW.js?v=905c193d:14414
+beginWork @ chunk-RFXM5SOW.js?v=905c193d:16025
+callCallback2 @ chunk-RFXM5SOW.js?v=905c193d:3680
+invokeGuardedCallbackDev @ chunk-RFXM5SOW.js?v=905c193d:3705
+invokeGuardedCallback @ chunk-RFXM5SOW.js?v=905c193d:3739
+beginWork$1 @ chunk-RFXM5SOW.js?v=905c193d:19818
+performUnitOfWork @ chunk-RFXM5SOW.js?v=905c193d:19251
+workLoopSync @ chunk-RFXM5SOW.js?v=905c193d:19190
+renderRootSync @ chunk-RFXM5SOW.js?v=905c193d:19169
+recoverFromConcurrentError @ chunk-RFXM5SOW.js?v=905c193d:18786
+performConcurrentWorkOnRoot @ chunk-RFXM5SOW.js?v=905c193d:18734
+workLoop @ chunk-RFXM5SOW.js?v=905c193d:197
+flushWork @ chunk-RFXM5SOW.js?v=905c193d:176
+performWorkUntilDeadline @ chunk-RFXM5SOW.js?v=905c193d:384
+Show 17 more frames
+Show less
+chunk-RFXM5SOW.js?v=905c193d:14080 The above error occurred in the <StremioPlayer> component:
+
+    at http://localhost:5174/src/routes/StremioPlayer.tsx?t=1754044237798:26:18
+    at RenderedRoute (http://localhost:5174/node_modules/.vite/deps/react-router-dom.js?v=905c193d:4088:5)
+    at Routes (http://localhost:5174/node_modules/.vite/deps/react-router-dom.js?v=905c193d:4558:5)
+    at div
+    at Router (http://localhost:5174/node_modules/.vite/deps/react-router-dom.js?v=905c193d:4501:15)
+    at BrowserRouter (http://localhost:5174/node_modules/.vite/deps/react-router-dom.js?v=905c193d:5247:5)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-RFXM5SOW.js?v=905c193d:14080
+update.callback @ chunk-RFXM5SOW.js?v=905c193d:14100
+callCallback @ chunk-RFXM5SOW.js?v=905c193d:11296
+commitUpdateQueue @ chunk-RFXM5SOW.js?v=905c193d:11313
+commitLayoutEffectOnFiber @ chunk-RFXM5SOW.js?v=905c193d:17141
+commitLayoutMountEffects_complete @ chunk-RFXM5SOW.js?v=905c193d:18030
+commitLayoutEffects_begin @ chunk-RFXM5SOW.js?v=905c193d:18019
+commitLayoutEffects @ chunk-RFXM5SOW.js?v=905c193d:17970
+commitRootImpl @ chunk-RFXM5SOW.js?v=905c193d:19406
+commitRoot @ chunk-RFXM5SOW.js?v=905c193d:19330
+finishConcurrentRender @ chunk-RFXM5SOW.js?v=905c193d:18813
+performConcurrentWorkOnRoot @ chunk-RFXM5SOW.js?v=905c193d:18768
+workLoop @ chunk-RFXM5SOW.js?v=905c193d:197
+flushWork @ chunk-RFXM5SOW.js?v=905c193d:176
+performWorkUntilDeadline @ chunk-RFXM5SOW.js?v=905c193d:384
+Show 15 more frames
+Show less
+chunk-RFXM5SOW.js?v=905c193d:19466 Uncaught ReferenceError: Cannot access 'convertMagnetToStream' before initialization
+    at StremioPlayer.tsx:120:18
+    at renderWithHooks (chunk-RFXM5SOW.js?v=905c193d:11596:26)
+    at updateFunctionComponent (chunk-RFXM5SOW.js?v=905c193d:14630:28)
+    at updateSimpleMemoComponent (chunk-RFXM5SOW.js?v=905c193d:14511:18)
+    at updateMemoComponent (chunk-RFXM5SOW.js?v=905c193d:14414:22)
+    at beginWork (chunk-RFXM5SOW.js?v=905c193d:16025:22)
+    at beginWork$1 (chunk-RFXM5SOW.js?v=905c193d:19806:22)
+    at performUnitOfWork (chunk-RFXM5SOW.js?v=905c193d:19251:20)
+    at workLoopSync (chunk-RFXM5SOW.js?v=905c193d:19190:13)
+    at renderRootSync (chunk-RFXM5SOW.js?v=905c193d:19169:15)
+(anonymous) @ StremioPlayer.tsx:120
+renderWithHooks @ chunk-RFXM5SOW.js?v=905c193d:11596
+updateFunctionComponent @ chunk-RFXM5SOW.js?v=905c193d:14630
+updateSimpleMemoComponent @ chunk-RFXM5SOW.js?v=905c193d:14511
+updateMemoComponent @ chunk-RFXM5SOW.js?v=905c193d:14414
+beginWork @ chunk-RFXM5SOW.js?v=905c193d:16025
+beginWork$1 @ chunk-RFXM5SOW.js?v=905c193d:19806
+performUnitOfWork @ chunk-RFXM5SOW.js?v=905c193d:19251
+workLoopSync @ chunk-RFXM5SOW.js?v=905c193d:19190
+renderRootSync @ chunk-RFXM5SOW.js?v=905c193d:19169
+recoverFromConcurrentError @ chunk-RFXM5SOW.js?v=905c193d:18786
+performConcurrentWorkOnRoot @ chunk-RFXM5SOW.js?v=905c193d:18734
+workLoop @ chunk-RFXM5SOW.js?v=905c193d:197
+flushWork @ chunk-RFXM5SOW.js?v=905c193d:176
+performWorkUntilDeadline @ chunk-RFXM5SOW.js?v=905c193d:384
+Show 14 more frames
+Show less
