@@ -12,11 +12,11 @@ x-casaos:
   author: HighSeas Team
   category: Media
   port_map: '6969'
-  icon: https://raw.githubusercontent.com/highseas-dev/highseas/main/assets/icon.png
+  icon: https://raw.githubusercontent.com/CaullenOmdahl/HighSeas/master/assets/icon.png
   screenshot_link:
-    - https://raw.githubusercontent.com/highseas-dev/highseas/main/assets/screenshot1.png
-    - https://raw.githubusercontent.com/highseas-dev/highseas/main/assets/screenshot2.png
-  thumbnail: https://raw.githubusercontent.com/highseas-dev/highseas/main/assets/thumbnail.png
+    - https://raw.githubusercontent.com/CaullenOmdahl/HighSeas/master/assets/screenshot1.png
+    - https://raw.githubusercontent.com/CaullenOmdahl/HighSeas/master/assets/screenshot2.png
+  thumbnail: https://raw.githubusercontent.com/CaullenOmdahl/HighSeas/master/assets/thumbnail.png
   title:
     en_us: HighSeas
   tips:
@@ -41,11 +41,14 @@ x-casaos:
   index: /
   scheme: http
   hostname: ''
-  image: highseas/highseas:latest
 
 services:
   app:
-    image: highseas/highseas:latest
+    image: ghcr.io/caullenom/highseas:latest
+    # Uncomment to build locally instead of using pre-built image:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
     container_name: highseas
     restart: unless-stopped
     ports:
@@ -75,11 +78,11 @@ services:
       - "casaos.name=HighSeas"
       - "casaos.category=Media"
       - "casaos.description=Netflix-style streaming interface for Stremio"
-      - "casaos.icon=https://raw.githubusercontent.com/highseas-dev/highseas/main/assets/icon.png"
+      - "casaos.icon=https://raw.githubusercontent.com/CaullenOmdahl/HighSeas/master/assets/icon.png"
       - "casaos.main=true"
       # Traefik labels (if using reverse proxy)
       - "traefik.enable=true"
-      - "traefik.http.routers.highseas.rule=Host(\`highseas.local\`)"
+      - "traefik.http.routers.highseas.rule=Host(`highseas.local`)"
       - "traefik.http.services.highseas.loadbalancer.server.port=6969"
     # Resource limits
     deploy:

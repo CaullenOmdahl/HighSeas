@@ -1,6 +1,12 @@
 node_modules
 stremio-ui-reference
 
+# Environment variables (contains sensitive tokens)
+.env
+.env.local
+.env.development
+.env.production
+
 # Development logs
 /logs/
 *.log
