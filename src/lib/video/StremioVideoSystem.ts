@@ -128,9 +128,10 @@ export class StremioVideoSystem {
     });
 
     this.videoElement.addEventListener('loadedmetadata', () => {
-      console.log('StremioVideoSystem: Video loadedmetadata event, duration:', this.videoElement!.duration);
+      if (!this.videoElement) return;
+      console.log('StremioVideoSystem: Video loadedmetadata event, duration:', this.videoElement.duration);
       this.emitPropChanged('loaded', true);
-      this.emitPropChanged('duration', this.videoElement!.duration * 1000);
+      this.emitPropChanged('duration', this.videoElement.duration * 1000);
       this.emitPropChanged('buffering', false);
     });
 
@@ -158,16 +159,19 @@ export class StremioVideoSystem {
     });
 
     this.videoElement.addEventListener('progress', () => {
-      this.emitPropChanged('buffered', this.videoElement!.buffered);
+      if (!this.videoElement) return;
+      this.emitPropChanged('buffered', this.videoElement.buffered);
     });
 
     this.videoElement.addEventListener('volumechange', () => {
-      this.emitPropChanged('volume', Math.floor(this.videoElement!.volume * 100));
-      this.emitPropChanged('muted', this.videoElement!.muted);
+      if (!this.videoElement) return;
+      this.emitPropChanged('volume', Math.floor(this.videoElement.volume * 100));
+      this.emitPropChanged('muted', this.videoElement.muted);
     });
 
     this.videoElement.addEventListener('ratechange', () => {
-      this.emitPropChanged('playbackSpeed', this.videoElement!.playbackRate);
+      if (!this.videoElement) return;
+      this.emitPropChanged('playbackSpeed', this.videoElement.playbackRate);
     });
 
     this.videoElement.addEventListener('ended', () => {
