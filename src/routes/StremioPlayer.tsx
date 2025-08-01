@@ -45,6 +45,10 @@ const StremioPlayer = memo(() => {
   // Advanced controls
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [muted, setMuted] = useState(false);
+  
+  // Real-Debrid link management
+  const [originalMagnet, setOriginalMagnet] = useState<string | null>(null);
+  const [linkRefreshCount, setLinkRefreshCount] = useState(0);
 
   const streamUrl = searchParams.get('stream');
   const quality = searchParams.get('quality');
@@ -107,17 +111,34 @@ const StremioPlayer = memo(() => {
     
     // Check if this is a Real-Debrid link that may have expired
     if (streamUrl?.includes('real-debrid.com') && (error.code === 4 || error.message?.includes('404') || error.message?.includes('Network error'))) {
-      setError('🔄 Stream link expired, refreshing...');
-      // Go back to the previous page to select a new stream
-      setTimeout(() => {
-        window.history.back();
-      }, 2000);
-      return;
+      // If we have the original magnet and haven't exceeded retry limit, refresh the link
+      if (originalMagnet && linkRefreshCount < 3) {
+        setError(`🔄 Stream link expired, refreshing... (attempt ${linkRefreshCount + 1}/3)`);
+        setLinkRefreshCount(prev => prev + 1);
+        setLoading(true);
+        
+        // Convert the original magnet link again to get a fresh Real-Debrid URL
+        setTimeout(() => {
+          convertMagnetToStream(originalMagnet);
+        }, 1000);
+        return;
+      } else if (linkRefreshCount >= 3) {
+        setError('❌ Unable to refresh stream link after 3 attempts. Please try selecting a different quality or source.');
+        setLoading(false);
+        return;
+      } else {
+        setError('🔄 Stream link expired, please go back and select a new stream');
+        // Go back to the previous page to select a new stream
+        setTimeout(() => {
+          window.history.back();
+        }, 3000);
+        return;
+      }
     }
     
     setError(error.message || 'Video playback error');
     setLoading(false);
-  }, [streamUrl]);
+  }, [streamUrl, originalMagnet, linkRefreshCount]);
 
   // Handle video end
   const handleVideoEnded = useCallback(() => {
@@ -154,6 +175,11 @@ const StremioPlayer = memo(() => {
       setLoading(true);
       setError(null);
       
+      // Store the original magnet link for potential refreshes
+      if (!originalMagnet) {
+        setOriginalMagnet(magnetLink);
+      }
+      
       const response = await fetch('/api/realdebrid', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -168,6 +194,9 @@ const StremioPlayer = memo(() => {
       const result = await response.json();
       
       if (result.status === 'ready' && result.streamUrl) {
+        // Reset refresh count on successful conversion
+        setLinkRefreshCount(0);
+        
         const newUrl = new URL(window.location.href);
         newUrl.searchParams.set('stream', result.streamUrl);
         window.history.replaceState({}, '', newUrl.toString());
@@ -194,7 +223,22 @@ const StremioPlayer = memo(() => {
       setError(`🚫 Real-Debrid Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setLoading(false);
     }
-  }, [streamUrl]);
+  }, [streamUrl, originalMagnet]);
+
+  // Proactive Real-Debrid link refresh to prevent expiration
+  useEffect(() => {
+    if (!streamUrl?.includes('real-debrid.com') || !originalMagnet) return;
+
+    // Set up a timer to refresh the link before it expires (typically 6 hours for Real-Debrid)
+    // We'll refresh after 5.5 hours (19800 seconds) to be safe
+    const refreshTimer = setTimeout(() => {
+      console.log('🔄 Proactively refreshing Real-Debrid link before expiration...');
+      setError('🔄 Refreshing stream link...');
+      convertMagnetToStream(originalMagnet);
+    }, 19800000); // 5.5 hours in milliseconds
+
+    return () => clearTimeout(refreshTimer);
+  }, [streamUrl, originalMagnet, convertMagnetToStream]);
 
   // Initialize player
   useEffect(() => {

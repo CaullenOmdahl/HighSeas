@@ -8,7 +8,7 @@ x-casaos:
     en_us: 'HighSeas - A Netflix-style streaming interface for Stremio addons with Real-Debrid integration. Features HLS transcoding for MKV files, advanced subtitle support, and mobile-optimized controls.'
   tagline:
     en_us: Premium streaming interface for Stremio
-  developer: HighSeas
+  developer: HighSeas Team
   author: HighSeas Team
   category: Media
   port_map: '6969'
@@ -38,36 +38,83 @@ x-casaos:
         - Mobile-optimized touch controls
         - Android TV compatibility
         - Pure streaming architecture (no downloads)
+    after_install:
+      en_us: |
+        ✅ **HighSeas Installation Complete**
+        
+        1. Access your HighSeas interface at: http://your-casaos-ip:6969
+        2. The application will prompt you if Real-Debrid token is missing
+        3. Configure Stremio addons in Settings > Addons
+        4. Browse and stream content from the main dashboard
+        
+        **Troubleshooting:**
+        - Check logs if Real-Debrid integration fails
+        - Ensure FFmpeg is working for MKV transcoding
+        - Verify network connectivity for streaming
   index: /
   scheme: http
   hostname: ''
+  store_app_id: highseas-streaming
+  project_url: https://github.com/CaullenOmdahl/HighSeas
+  version: "1.0.0"
+  envs:
+    - container: REAL_DEBRID_TOKEN
+      description: 
+        en_us: Real-Debrid API Token (Required) - Get from https://real-debrid.com/apitoken
+      default: ""
+    - container: NODE_ENV
+      description:
+        en_us: Application environment
+      default: production
+    - container: PORT
+      description:
+        en_us: Server port
+      default: "6969"
+    - container: BODY_SIZE_LIMIT
+      description:
+        en_us: Request body size limit
+      default: "10mb"
+    - container: LOG_LEVEL
+      description:
+        en_us: Logging level (error, warn, info, debug)
+      default: info
+    - container: ENABLE_AMD_GPU
+      description:
+        en_us: Enable AMD GPU transcoding (VAAPI)
+      default: "true"
+  volumes:
+    - container: /app/data
+      description:
+        en_us: Application data directory
+    - container: /app/logs
+      description:
+        en_us: Application logs directory
+  ports:
+    - container: "6969"
+      description:
+        en_us: Web interface port
 
 services:
   app:
-    # Use pre-built image from Docker Hub
     image: caullen/highseas-streaming:latest
-    # Uncomment to build locally instead:
-    # build:
-    #   context: .
-    #   dockerfile: Dockerfile
-    container_name: highseas
+    container_name: highseas-streaming
     restart: unless-stopped
     ports:
       - "6969:6969"
     environment:
-      - NODE_ENV=production
-      - PORT=6969
-      - BODY_SIZE_LIMIT=10mb
-      - LOG_LEVEL=info
-      - REAL_DEBRID_TOKEN=${REAL_DEBRID_TOKEN:-}
-      - ENABLE_AMD_GPU=${ENABLE_AMD_GPU:-true}
+      NODE_ENV: production
+      PORT: 6969
+      BODY_SIZE_LIMIT: 10mb
+      LOG_LEVEL: info
+      REAL_DEBRID_TOKEN: ${REAL_DEBRID_TOKEN:-}
+      ENABLE_AMD_GPU: ${ENABLE_AMD_GPU:-true}
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
+      - /DATA/AppData/highseas-streaming/data:/app/data
+      - /DATA/AppData/highseas-streaming/logs:/app/logs
     devices:
-      - /dev/dri:/dev/dri  # AMD GPU device access for VAAPI transcoding
+      - /dev/dri:/dev/dri
     group_add:
-      - video  # Add container to video group for GPU access
+      - video
     healthcheck:
       test: ["CMD", "node", "-e", "http.get('http://localhost:6969/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
       interval: 30s
@@ -75,33 +122,18 @@ services:
       retries: 3
       start_period: 30s
     labels:
-      # CasaOS labels
       - "casaos.name=HighSeas"
       - "casaos.category=Media"
       - "casaos.description=Netflix-style streaming interface for Stremio"
       - "casaos.icon=https://raw.githubusercontent.com/CaullenOmdahl/HighSeas/master/assets/icon.png"
       - "casaos.main=true"
-      # Traefik labels (if using reverse proxy)
-      - "traefik.enable=true"
-      - "traefik.http.routers.highseas.rule=Host(`highseas.local`)"
-      - "traefik.http.services.highseas.loadbalancer.server.port=6969"
-    # Resource limits
-    deploy:
-      resources:
-        limits:
-          cpus: '2.0'
-          memory: 1G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
-    # Logging configuration
+      - "casaos.index=/"
     logging:
-      driver: 'json-file'
+      driver: json-file
       options:
-        max-size: '10m'
+        max-size: 10m
         max-file: '3'
 
 networks:
   default:
     name: highseas-network
-    driver: bridge

@@ -155,6 +155,40 @@ app.use((req, res, next) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
+// Simple cache for Real-Debrid conversions (prevents duplicate API calls)
+const realDebridCache = new Map();
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+
+function getCachedStream(magnetLink) {
+    const cached = realDebridCache.get(magnetLink);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        console.log('📦 Using cached Real-Debrid stream');
+        return cached.result;
+    }
+    return null;
+}
+
+function setCachedStream(magnetLink, result) {
+    // Only cache successful results
+    if (result.status === 'ready' && result.streamUrl) {
+        realDebridCache.set(magnetLink, {
+            result: result,
+            timestamp: Date.now()
+        });
+        console.log('💾 Cached Real-Debrid stream for 30 minutes');
+    }
+}
+
+// Clean up expired cache entries periodically
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of realDebridCache.entries()) {
+        if (now - value.timestamp > CACHE_DURATION) {
+            realDebridCache.delete(key);
+        }
+    }
+}, 10 * 60 * 1000); // Clean up every 10 minutes
+
 // Real-Debrid API types and service (duplicated for local development)
 class RealDebridService {
     constructor(apiKey) {
@@ -461,7 +495,16 @@ app.post('/api/realdebrid', async (req, res) => {
 
         console.log('🔄 Processing magnet link conversion...');
         
+        // Check cache first
+        const cachedResult = getCachedStream(magnetLink);
+        if (cachedResult) {
+            return res.status(200).json(cachedResult);
+        }
+        
         const result = await realDebridService.convertMagnetToStream(magnetLink);
+        
+        // Cache successful results
+        setCachedStream(magnetLink, result);
         
         return res.status(200).json(result);
 
