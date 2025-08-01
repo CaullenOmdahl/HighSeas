@@ -6,10 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Core Development
 ```bash
-npm run dev                     # Start development server (port 5173)
-npm run build                   # Production build
+npm run dev                     # Start Vite development server (port 5173)
+npm run build                   # Production build (TypeScript + Vite)
 npm run preview                 # Preview production build (port 4173)
-npm start                       # Start production server from build/
+npm start                       # Start production server (port 6969)
 ```
 
 ### Code Quality & Security
@@ -17,9 +17,7 @@ npm start                       # Start production server from build/
 npm run lint                    # Run ESLint + Prettier checks
 npm run lint:fix                # Auto-fix linting issues
 npm run format                  # Format code with Prettier
-npm run check                   # SvelteKit + TypeScript checks
 npm run type-check              # TypeScript-only type checking
-npm run security:check          # Security audit + lint + type check
 ```
 
 ### Testing
@@ -44,26 +42,45 @@ npm run docker:down            # Docker Compose down
 
 ## Architecture Overview
 
+### Technology Stack
+This is a **React + TypeScript** streaming application with:
+- **Frontend**: React 18 + TypeScript + Vite for fast development
+- **Backend**: Express.js server for API endpoints and static file serving
+- **UI Framework**: Ionic React components for mobile-first design
+- **Styling**: CSS modules with Less preprocessing
+- **Video Player**: Custom Stremio-compatible video system with advanced features
+- **Build Tool**: Vite with optimized chunking and lazy loading
+
+### Stremio Video Player Architecture (Critical)
+Complete implementation of Stremio's proven video player system:
+- **StremioVideoSystem** (`src/lib/video/StremioVideoSystem.ts`) - Core video player with HLS support
+- **StremioVideoPlayer** (`src/lib/video/StremioVideoPlayer.tsx`) - React wrapper component
+- **StremioPlayer** (`src/routes/StremioPlayer.tsx`) - Full-featured player with controls
+- **Advanced Subtitles**: SRT/WebVTT parsing with real-time rendering and styling
+- **HLS Streaming**: Adaptive streaming with hls.js integration and fallbacks
+- **Event-Driven**: Property observation and action dispatch patterns from Stremio
+- **Subtitle System**: Advanced subtitle rendering with SRT/WebVTT parsing, CORS proxy, and real-time styling
+
 ### Streaming Architecture (Critical)
 This application implements **pure streaming without downloads**:
-- `/api/proxy` endpoint streams video content using `Response(response.body)` 
+- Stremio video player streams content directly with memory-bounded buffering
+- `/api/subtitles` proxy endpoint handles external subtitle files with CORS
+- Range requests supported for video seeking functionality
 - No temporary files created, no content stored locally
-- Range requests forwarded for video seeking functionality
-- Memory bounded with 50MB max buffer limit
 - Domain whitelist validates stream sources (Real-Debrid, Torrentio)
 
 ### Stream Selection Flow
 Enhanced user experience with provider and quality selection:
 - Users choose streaming source and quality before playback
-- `StreamSelector.svelte` component parses stream information
-- Extracts provider (Real-Debrid, Torrentio, etc.) and quality (4K, 1080p, etc.)
-- Groups streams by provider for organized selection
-- "Change Stream Quality" button allows switching during playback
+- `VideosList` component in MetaDetails handles episode selection
+- Real-Debrid integration converts magnet links to direct streams
+- Professional video controls with speed, volume, and fullscreen options
+- Mobile-optimized touch controls for Android TV and phone usage
 
 ### Security Architecture (Environment Variables)
-- **NEVER** hardcode API tokens in client-side code - use `src/lib/server-config.ts`
-- Client config (`src/lib/config.ts`) contains only public configuration
-- Server config (`src/lib/server-config.ts`) handles sensitive environment variables
+- **NEVER** hardcode API tokens in client-side code
+- All sensitive data handled server-side via Express.js endpoints
+- Environment variables managed in `.env` file (server-side only)
 - ESLint rules prevent hardcoded secrets (32+ character patterns detected)
 
 ### Key Service Layers
@@ -74,11 +91,11 @@ Enhanced user experience with provider and quality selection:
 - Validates stream sources and filters by quality
 - Uses structured logging for debugging addon interactions
 
-**Stream Proxy** (`src/routes/api/proxy/+server.ts`):
-- Validates stream URLs against domain whitelist
-- Forwards range requests for video seeking
-- Sets proper CORS headers for client access
-- Implements streaming without local storage
+**API Endpoints** (`server/index.js`):
+- `/api/realdebrid` - Real-Debrid magnet link conversion and status checking
+- `/api/subtitles` - CORS-compliant subtitle proxy for external files
+- `/api/health` - Server health and status endpoint
+- Static file serving with React Router history API fallback
 
 **Caching System** (`src/lib/utils/cache.ts`):
 - LRU cache with TTL for requests, metadata, and streams
@@ -87,20 +104,29 @@ Enhanced user experience with provider and quality selection:
 
 ### Component Architecture
 
-**Player Components**:
-- `BufferedPlayer.svelte` - Main video player with buffering management
-- `Player.svelte` - Base video player wrapper
-- Both integrate with Video.js and handle streaming URLs via proxy
+**Video Player Components**:
+- `StremioPlayer.tsx` - Main video player route with full Stremio features
+- `StremioVideoPlayer.tsx` - React wrapper for Stremio video system
+- `StremioVideoSystem.ts` - Core video player with HLS and subtitle support
+- `Player.tsx` - Fallback basic HTML5 video player
 
-**Performance Components**:
-- `LazyImage.svelte` - Intersection observer-based image lazy loading
-- `VirtualScroll.svelte` - Efficient rendering for large content lists
-- `LazyComponent.svelte` - Dynamic component loading
+**UI Components**:
+- `VideosList.tsx` - Episode list with mobile touch optimization and pagination
+- `EpisodePicker.tsx` - Season/episode selector with performance improvements
+- `MetaDetails.tsx` - Movie/TV show detail pages with stream selection
+- `SafeImage.tsx` - Optimized image loading with fallbacks
 
-**Navigation**:
-- Full keyboard navigation support via `KeyboardNavigation.svelte`
-- Arrow key navigation between content rows and within rows
-- WCAG 2.1 AA accessibility compliance
+**Layout Components**:
+- `MainNavBars.tsx` - Navigation wrapper with horizontal and vertical nav
+- `HorizontalNavBar.tsx` - Top navigation with search and branding
+- `VerticalNavBar.tsx` - Side navigation (desktop) / bottom navigation (mobile)
+- Responsive design with mobile-first approach
+
+**Performance Features**:
+- React.memo() for component optimization
+- useCallback() for event handler optimization
+- Lazy loading with pagination for large episode lists
+- CSS modules for scoped styling and better performance
 
 ### Error Handling System
 
@@ -154,12 +180,14 @@ When modifying streaming functionality, verify:
 - Error handling maintains streaming-only approach
 
 ### Code Organization
-- Client config: `src/lib/config.ts` (public settings only)
-- Server config: `src/lib/server-config.ts` (sensitive environment variables)
-- Types: `src/lib/types/` (api.ts, errors.ts)
-- Utils: `src/lib/utils/` (logger.ts, cache.ts, etc.)
-- Services: `src/lib/services/` (stremio.ts, streamProxy.ts)
-- Components: `src/lib/components/` (organized by feature)
+- **Routes**: `src/routes/` (main application pages - Board, MetaDetails, StremioPlayer, etc.)
+- **Video System**: `src/lib/video/` (complete Stremio video player implementation)
+- **Components**: `src/lib/components/` (reusable UI components)  
+- **Stremio Components**: `src/stremio/components/` (Stremio-style UI components)
+- **Services**: `src/lib/services/` (stremio.ts, realdebrid.ts)
+- **Types**: `src/lib/types.ts` (TypeScript interfaces and types)
+- **Server**: `server/index.js` (Express.js API endpoints and static serving)
+- **Styling**: Component-level CSS modules (`.module.less` files)
 
 ### Environment Variables
 Required for production:
