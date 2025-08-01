@@ -19,7 +19,6 @@ screenshots:
 # Supported architectures
 architectures:
   - amd64
-  - arm64
 
 # Port configuration
 port: 6969

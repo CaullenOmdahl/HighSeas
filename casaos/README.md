@@ -67,7 +67,7 @@ When available in the CasaOS App Store:
 - **RAM**: 512MB (1GB limit)
 - **Storage**: 1GB available space
 - **Network**: Internet access for streaming
-- **Architectures**: amd64, arm64
+- **Architectures**: amd64
 
 ### Recommended Requirements
 - **CPU**: 2+ cores for transcoding

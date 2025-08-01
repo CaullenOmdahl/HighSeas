@@ -67,7 +67,7 @@ RUN adduser -S highseas -u 1001
 WORKDIR /app
 
 # Copy built application from builder stage
-COPY --from=builder --chown=highseas:nodejs /app/build build/
+COPY --from=builder --chown=highseas:nodejs /app/dist dist/
 COPY --from=builder --chown=highseas:nodejs /app/node_modules node_modules/
 COPY --from=builder --chown=highseas:nodejs /app/package.json .
 COPY --from=builder --chown=highseas:nodejs /app/server server/

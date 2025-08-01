@@ -3,7 +3,6 @@ version: '3.8'
 x-casaos:
   architectures:
     - amd64
-    - arm64
   main: app
   description:
     en_us: 'HighSeas - A Netflix-style streaming interface for Stremio addons with Real-Debrid integration. Features HLS transcoding for MKV files, advanced subtitle support, and mobile-optimized controls.'
