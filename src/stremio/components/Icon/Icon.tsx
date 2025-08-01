@@ -18,7 +18,8 @@ import {
     closeOutline,
     ellipsisHorizontalOutline,
     checkmarkOutline,
-    volumeHighOutline
+    volumeHighOutline,
+    chatbubbleOutline
 } from 'ionicons/icons';
 import { IonIcon } from '@ionic/react';
 
@@ -48,6 +49,7 @@ const ICON_MAP: Record<string, string> = {
     '⋯': ellipsisHorizontalOutline,
     '✓': checkmarkOutline,
     volume: volumeHighOutline,
+    subtitles: chatbubbleOutline,
 };
 
 const Icon = memo(({ className, icon, title, size = 'medium' }: Props) => {

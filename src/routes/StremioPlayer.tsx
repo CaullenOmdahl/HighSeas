@@ -51,8 +51,10 @@ const StremioPlayer = memo(() => {
   const season = searchParams.get('season');
   const episode = searchParams.get('episode');
 
-  // Debug logging
-  console.log('StremioPlayer params:', { id, streamUrl, quality, season, episode });
+  // Debug logging (only log when params change)
+  useEffect(() => {
+    console.log('StremioPlayer params:', { id, streamUrl, quality, season, episode });
+  }, [id, streamUrl, quality, season, episode]);
 
   // Handle property changes from video player
   const handlePropChanged = useCallback((propName: keyof VideoProperties, propValue: any) => {
@@ -138,7 +140,6 @@ const StremioPlayer = memo(() => {
 
   // Initialize player
   useEffect(() => {
-    console.log('StremioPlayer initializing with streamUrl:', streamUrl);
     
     if (!streamUrl) {
       console.log('No stream URL provided, showing error');
@@ -149,7 +150,6 @@ const StremioPlayer = memo(() => {
 
     // For valid streams, show the player after a brief delay
     const initTimeout = setTimeout(() => {
-      console.log('StremioPlayer initialization complete');
       setLoading(false);
     }, 500);
 
