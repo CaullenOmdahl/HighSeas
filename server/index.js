@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
-import { pipeline } from 'stream/promises';
+// import { pipeline } from 'stream/promises'; // Currently unused
 import { Readable } from 'stream';
 import { spawn } from 'child_process';
 
@@ -19,6 +19,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 6969;
+
+// Disable X-Powered-By header for security
+app.disable('x-powered-by');
 
 // Rate limiting store (in-memory for simplicity)
 const rateLimitStore = new Map();
@@ -949,7 +952,8 @@ const sanitizeURLForLogging = (url) => {
 app.get('/api/hls/:sessionId/master.m3u8', async (req, res) => {
     try {
         const { sessionId } = req.params;
-        const { mediaURL, videoCodecs, audioCodecs, format } = req.query;
+        const { mediaURL } = req.query;
+        // const { videoCodecs, audioCodecs, format } = req.query; // Reserved for future use
         
         if (!mediaURL) {
             return res.status(400).json({ error: 'mediaURL parameter required' });
@@ -991,7 +995,7 @@ playlist.m3u8?${new URLSearchParams(req.query).toString()}
 app.get('/api/hls/:sessionId/playlist.m3u8', async (req, res) => {
     try {
         const { sessionId } = req.params;
-        const { mediaURL } = req.query;
+        // const { mediaURL } = req.query; // Reserved for future playlist generation
         
         console.log('📋 HLS Playlist request:', { sessionId });
         

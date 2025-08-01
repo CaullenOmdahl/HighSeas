@@ -761,12 +761,16 @@ export class StremioVideoSystem {
         autoplay: typeof commandArgs.autoplay === 'boolean' ? commandArgs.autoplay : true
       });
       
+      // Set video properties - using non-null assertion since we just created the element
+      const videoEl = this.videoElement!;
+      
       // Check container format compatibility
+      let needsTranscoding = false;
       if (this.videoElement) {
-        const canPlayMp4H264 = this.videoElement.canPlayType('video/mp4; codecs="avc1.42E01E"');
-        const canPlayMp4H265 = this.videoElement.canPlayType('video/mp4; codecs="hev1.1.6.L93.B0"');
-        const canPlayMkvH264 = this.videoElement.canPlayType('video/x-matroska; codecs="avc1.42E01E"');
-        const canPlayMkvH265 = this.videoElement.canPlayType('video/x-matroska; codecs="hev1.1.6.L93.B0"');
+        const canPlayMp4H264 = videoEl.canPlayType('video/mp4; codecs="avc1.42E01E"');
+        const canPlayMp4H265 = videoEl.canPlayType('video/mp4; codecs="hev1.1.6.L93.B0"');
+        const canPlayMkvH264 = videoEl.canPlayType('video/x-matroska; codecs="avc1.42E01E"');
+        const canPlayMkvH265 = videoEl.canPlayType('video/x-matroska; codecs="hev1.1.6.L93.B0"');
         
         logInfo(LogCategory.STREAM, 'Browser codec support check', {
           'MP4 H264': canPlayMp4H264 || 'not supported',
@@ -776,7 +780,7 @@ export class StremioVideoSystem {
         });
         
         // Check if this stream needs transcoding (Stremio approach)
-        const needsTranscoding = this.shouldTranscode(this.currentStream, {
+        needsTranscoding = this.shouldTranscode(this.currentStream, {
           canPlayMkvH264,
           canPlayMkvH265,
           canPlayMp4H264,
@@ -790,9 +794,6 @@ export class StremioVideoSystem {
           });
         }
       }
-      
-      // Set video properties - using non-null assertion since we just created the element
-      const videoEl = this.videoElement!;
       videoEl.autoplay = typeof commandArgs.autoplay === 'boolean' ? commandArgs.autoplay : true;
       
       if (commandArgs.time !== null && isFinite(commandArgs.time)) {
