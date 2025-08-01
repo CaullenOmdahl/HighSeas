@@ -1,0 +1,22 @@
+# Build outputs
+dist/
+build/
+node_modules/
+
+# Third-party reference code (legacy CommonJS)
+stremio-ui-reference/
+stremio-video-reference/
+
+# Generated files
+*.min.js
+*.bundle.js
+
+# Configuration files that may have different rules
+*.config.js
+*.config.ts
+vite.config.ts
+vitest.config.ts
+playwright.config.ts
+
+# Documentation
+*.md

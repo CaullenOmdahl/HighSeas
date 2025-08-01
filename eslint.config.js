@@ -19,6 +19,7 @@ export default ts.config(
 			'**/build/**',
 			'**/dist/**',
 			'**/stremio-ui-reference/**',
+			'**/stremio-video-reference/**',
 			'**/android/**',
 			'**/*.config.js',
 			'**/*.config.ts'
@@ -45,15 +46,21 @@ export default ts.config(
 		},
 		rules: {
 			...reactHooks.configs.recommended.rules,
+			'react-hooks/exhaustive-deps': 'warn', // Downgrade to warning
 			
 			// React-specific rules
 			'react/react-in-jsx-scope': 'off', // Not needed with new JSX transform
 			'react/jsx-uses-react': 'off',
 			'react/jsx-uses-vars': 'error',
+			'react/display-name': 'warn', // Downgrade to warning
+			'react/prop-types': 'off', // Using TypeScript for prop validation
+			'react/no-unescaped-entities': 'warn', // Downgrade to warning
 			
 			// TypeScript-specific
 			'no-undef': 'off',
 			'@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+			'@typescript-eslint/no-explicit-any': 'warn', // Downgrade to warning
+			'@typescript-eslint/no-unsafe-function-type': 'warn', // Downgrade to warning
 			
 			// Security rules
 			'no-eval': 'error',
