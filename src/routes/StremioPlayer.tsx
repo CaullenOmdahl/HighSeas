@@ -117,7 +117,7 @@ const StremioPlayer = memo(() => {
     
     setError(error.message || 'Video playback error');
     setLoading(false);
-  }, [streamUrl, convertMagnetToStream]);
+  }, [streamUrl]);
 
   // Handle video end
   const handleVideoEnded = useCallback(() => {
