@@ -110,9 +110,14 @@ export class StremioVideoSystem {
     this.videoElement.style.height = '100%';
     this.videoElement.style.backgroundColor = 'transparent';
     this.videoElement.controls = false;
-    this.videoElement.preload = 'metadata';
+    this.videoElement.preload = 'auto'; // Changed from 'metadata' to 'auto' for better buffering
     this.videoElement.playsInline = true;
     // Don't set crossOrigin for Real-Debrid streams as they don't support CORS
+    
+    // Add buffer configuration for better streaming performance
+    if ('bufferTime' in this.videoElement) {
+      (this.videoElement as any).bufferTime = 10; // 10 seconds buffer
+    }
 
     this.containerElement.appendChild(this.videoElement);
     this.setupVideoEventListeners();
@@ -422,9 +427,34 @@ export class StremioVideoSystem {
     if (typeof window !== 'undefined' && (window as any).Hls?.isSupported()) {
       const Hls = (window as any).Hls;
       this.hlsInstance = new Hls({
+        debug: false,
         enableWorker: true,
         lowLatencyMode: false,
-        backBufferLength: 90
+        backBufferLength: 30,
+        maxBufferLength: 50,
+        maxMaxBufferLength: 80,
+        maxFragLookUpTolerance: 0,
+        maxBufferHole: 0,
+        appendErrorMaxRetry: 20,
+        nudgeMaxRetry: 20,
+        manifestLoadingTimeOut: 30000,
+        manifestLoadingMaxRetry: 10,
+        fragLoadPolicy: {
+          default: {
+            maxTimeToFirstByteMs: 10000,
+            maxLoadTimeMs: 120000,
+            timeoutRetry: {
+              maxNumRetry: 20,
+              retryDelayMs: 0,
+              maxRetryDelayMs: 15
+            },
+            errorRetry: {
+              maxNumRetry: 6,
+              retryDelayMs: 1000,
+              maxRetryDelayMs: 15
+            }
+          }
+        }
       });
 
       this.hlsInstance.loadSource(streamUrl);
