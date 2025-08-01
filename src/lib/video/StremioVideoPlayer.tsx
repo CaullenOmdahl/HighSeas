@@ -138,7 +138,7 @@ const StremioVideoPlayer = forwardRef<StremioVideoPlayerRef, StremioVideoPlayerP
         videoInstanceRef.current = null;
       }
     };
-  }, []);
+  }, [props.onPropChanged, props.onError, props.onEnded]);
 
   // Handle subtitle track changes
   useEffect(() => {

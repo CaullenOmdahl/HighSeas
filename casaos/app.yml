@@ -1,0 +1,154 @@
+# CasaOS App Configuration for HighSeas
+# This file defines the application metadata for CasaOS App Store
+
+name: highseas
+version: "1.0.0"
+category: Media
+description: "Netflix-style streaming interface for Stremio addons with Real-Debrid integration"
+developer: "HighSeas Team"
+website: "https://github.com/highseas-dev/highseas"
+source: "https://github.com/highseas-dev/highseas"
+icon: "https://raw.githubusercontent.com/highseas-dev/highseas/main/assets/icon.png"
+thumbnail: "https://raw.githubusercontent.com/highseas-dev/highseas/main/assets/thumbnail.png"
+
+# Screenshots for the app store
+screenshots:
+  - "https://raw.githubusercontent.com/highseas-dev/highseas/main/assets/screenshot1.png"
+  - "https://raw.githubusercontent.com/highseas-dev/highseas/main/assets/screenshot2.png"
+
+# Supported architectures
+architectures:
+  - amd64
+  - arm64
+
+# Port configuration
+port: 6969
+scheme: http
+path: "/"
+
+# Docker configuration
+docker:
+  image: "highseas/highseas:latest"
+  shell: "/bin/sh"
+  privileged: false
+  network_mode: "bridge"
+  restart_policy: "unless-stopped"
+
+# Environment variables configuration
+environment:
+  - name: "NODE_ENV"
+    default: "production"
+    description: "Node.js environment"
+    type: "string"
+    required: true
+    
+  - name: "PORT"
+    default: "6969"
+    description: "Server port"
+    type: "number"
+    required: true
+    
+  - name: "REAL_DEBRID_TOKEN"
+    default: ""
+    description: "Real-Debrid API token (required for functionality)"
+    type: "password"
+    required: true
+    
+  - name: "BODY_SIZE_LIMIT"
+    default: "10mb"
+    description: "Request body size limit"
+    type: "string"
+    required: false
+    
+  - name: "LOG_LEVEL"
+    default: "info"
+    description: "Logging level (error, warn, info, debug)"
+    type: "string"
+    required: false
+
+# Volume mappings
+volumes:
+  - container: "/app/data"
+    host: "./data"
+    description: "Application data directory"
+    
+  - container: "/app/logs"  
+    host: "./logs"
+    description: "Application logs directory"
+
+# Resource limits
+resources:
+  memory:
+    limit: "1G"
+    reservation: "512M"
+  cpu:
+    limit: "2.0"
+    reservation: "0.5"
+
+# Health check configuration
+healthcheck:
+  test: 
+    - "CMD"
+    - "node"
+    - "-e"
+    - "http.get('http://localhost:6969/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+  interval: "30s"
+  timeout: "10s"
+  retries: 3
+  start_period: "30s"
+
+# Installation tips and requirements
+tips:
+  before_install: |
+    ⚠️ **Real-Debrid API Token Required**
+    
+    This application requires a Real-Debrid premium account and API token to function properly.
+    
+    1. Sign up for a Real-Debrid account at https://real-debrid.com
+    2. Go to https://real-debrid.com/apitoken to generate your API token
+    3. Enter the token in the REAL_DEBRID_TOKEN environment variable during installation
+    
+    **System Requirements:**
+    - Minimum 512MB RAM
+    - 1GB+ available storage
+    - Network access for streaming content
+    
+    **Features:**
+    - Netflix-style streaming interface
+    - Real-Debrid integration for premium streaming
+    - HLS transcoding for MKV file support (FFmpeg included)
+    - Advanced subtitle support with SRT/WebVTT parsing
+    - Mobile-optimized touch controls
+    - Android TV compatibility
+    - Pure streaming architecture (no downloads)
+
+  after_install: |
+    ✅ **HighSeas Installation Complete**
+    
+    1. Access your HighSeas interface at: http://your-casaos-ip:6969
+    2. The application will prompt you if Real-Debrid token is missing
+    3. Configure Stremio addons in Settings > Addons
+    4. Browse and stream content from the main dashboard
+    
+    **Troubleshooting:**
+    - Check logs if Real-Debrid integration fails
+    - Ensure FFmpeg is working for MKV transcoding
+    - Verify network connectivity for streaming
+    
+    **Support:**
+    - GitHub Issues: https://github.com/highseas-dev/highseas/issues
+    - Documentation: https://github.com/highseas-dev/highseas/wiki
+
+# Tags for discoverability
+tags:
+  - streaming
+  - media
+  - netflix
+  - stremio
+  - real-debrid
+  - transcoding
+  - hls
+  - subtitles
+
+# Minimum CasaOS version required
+min_casaos_version: "0.4.0"

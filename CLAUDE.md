@@ -33,6 +33,18 @@ npm run test:e2e:ui             # E2E tests with debugging UI
 npm run test:all                # Complete test suite
 ```
 
+### Git Workflow & Production Safety
+```bash
+# Development workflow - safe for regular commits
+git add .
+git commit -m "your changes"
+git push origin master          # Safe for development
+
+# ⚠️ CRITICAL: Production deployment safety
+# NEVER push to production unless explicitly requested by user
+# Always ask for confirmation before any production-related actions
+```
+
 ### Docker Operations
 ```bash
 npm run docker:build           # Build Docker image
@@ -227,3 +239,59 @@ STREMIO_API_URL=http://localhost:11470  # Local Stremio instance
 - Monitor memory usage during streaming operations
 
 This is a production-ready Netflix-style streaming interface with enterprise-grade security, performance optimization, and comprehensive testing. The streaming architecture correctly proxies content without downloads, making it suitable for privacy-focused streaming applications.
+
+## Available Tools and Resources
+
+### 🛠️ Claude Code MCP Tools Available
+
+**Filesystem Management:**
+- `Read` - Direct file reading with line limits and offsets
+- `Edit` - Precise string-based file editing
+- `Write` - File creation and overwriting
+- `MultiEdit` - Multiple edits to a single file in one operation
+- `Glob` - Fast file pattern matching and search
+- `LS` - Directory listing with filtering options
+
+**GitHub Integration:**
+- `mcp__smithery-ai-github__create_or_update_file` - Direct GitHub file management
+- `mcp__smithery-ai-github__get_file_contents` - Read files from GitHub repositories  
+- `mcp__smithery-ai-github__push_files` - Batch file commits to GitHub
+- `mcp__smithery-ai-github__create_pull_request` - Create PRs with descriptions
+- `mcp__smithery-ai-github__create_issue` - Create GitHub issues
+- `mcp__smithery-ai-github__search_repositories` - Search GitHub repos
+- `mcp__smithery-ai-github__create_branch` - Create feature branches
+
+**Development Tools:**
+- `Task` - Launch specialized agents for complex research/search tasks
+- `Bash` - Execute shell commands with proper security measures
+- `Grep` - Powerful text search with regex support (ripgrep-based)
+- `WebFetch` - Fetch and analyze web content with AI processing
+- `WebSearch` - Search the web for current information
+- `TodoWrite` - Task management and progress tracking
+
+### 📋 Development Guidelines
+
+**File Management:**
+- Do what has been asked; nothing more, nothing less
+- NEVER create files unless absolutely necessary for achieving the goal
+- ALWAYS prefer editing an existing file to creating a new one
+- NEVER proactively create documentation files (*.md) or README files unless explicitly requested
+
+**Code Quality:**
+- Follow existing code patterns and conventions
+- Maintain TypeScript type safety
+- Use existing UI components and patterns
+- Ensure mobile responsiveness
+- Follow security best practices
+
+**Production Safety:**
+- ⚠️ **CRITICAL**: NEVER push to production unless explicitly requested by user
+- Always ask for confirmation before any production-related actions
+- Development changes on master branch are safe and encouraged
+- Production deployments require explicit user approval
+
+**Documentation Maintenance Protocol:**
+- Update relevant documentation when making code changes
+- Keep API documentation current with endpoint changes
+- Maintain accurate architecture documentation
+- Update installation guides when dependencies change

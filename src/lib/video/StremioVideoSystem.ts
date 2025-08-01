@@ -111,10 +111,14 @@ export class StremioVideoSystem {
     this.videoElement.style.width = '100%';
     this.videoElement.style.height = '100%';
     this.videoElement.style.backgroundColor = 'transparent';
-    this.videoElement.controls = false;
+    this.videoElement.controls = true; // TEMP: Enable controls for debugging
     this.videoElement.preload = 'auto'; // Changed from 'metadata' to 'auto' for better buffering
     this.videoElement.playsInline = true;
     // Don't set crossOrigin for Real-Debrid streams as they don't support CORS
+    
+    // Add more permissive attributes for codec compatibility
+    this.videoElement.setAttribute('muted', 'true'); // Start muted to avoid autoplay issues
+    this.videoElement.setAttribute('data-allow-hardware-decode', 'true');
     
     // Add buffer configuration for better streaming performance
     if ('bufferTime' in this.videoElement) {
@@ -138,7 +142,10 @@ export class StremioVideoSystem {
       if (!this.videoElement) return;
       logInfo(LogCategory.PLAYER, 'Video loadedmetadata event', { 
         duration: this.videoElement.duration,
-        durationFormatted: `${Math.floor(this.videoElement.duration / 60)}:${Math.floor(this.videoElement.duration % 60).toString().padStart(2, '0')}`
+        durationFormatted: `${Math.floor(this.videoElement.duration / 60)}:${Math.floor(this.videoElement.duration % 60).toString().padStart(2, '0')}`,
+        readyState: this.videoElement.readyState,
+        networkState: this.videoElement.networkState,
+        preload: this.videoElement.preload
       });
       this.emitPropChanged('loaded', true);
       this.emitPropChanged('duration', this.videoElement.duration * 1000);
@@ -161,6 +168,13 @@ export class StremioVideoSystem {
     });
 
     this.videoElement.addEventListener('waiting', () => {
+      if (!this.videoElement) return;
+      logWarn(LogCategory.PERFORMANCE, 'Video waiting - network issue detected', {
+        readyState: this.videoElement.readyState,
+        networkState: this.videoElement.networkState,
+        buffered: this.videoElement.buffered.length,
+        currentSrc: this.videoElement.currentSrc ? this.videoElement.currentSrc.substring(0, 100) + '...' : 'none'
+      });
       this.emitPropChanged('buffering', true);
     });
 
@@ -349,6 +363,35 @@ export class StremioVideoSystem {
     }
   }
 
+  private shouldTranscode(streamUrl: string | null, codecSupport: any): boolean {
+    if (!streamUrl) return false;
+    
+    // Check if MKV container with unsupported codec combination
+    if (streamUrl.includes('.mkv')) {
+      const mkvSupported = codecSupport.canPlayMkvH264 !== '' || codecSupport.canPlayMkvH265 !== '';
+      if (!mkvSupported) {
+        return true; // Transcode MKV files when browser doesn't support MKV container
+      }
+    }
+    
+    // Add other transcoding rules here (codec issues, etc.)
+    return false;
+  }
+
+  private generateTranscodingUrl(originalUrl: string): string {
+    // Generate unique session ID for this transcoding session
+    const sessionId = Math.random().toString(36).substring(2, 15);
+    
+    // Create HLS transcoding URL (similar to Stremio's approach)
+    const params = new URLSearchParams();
+    params.set('mediaURL', originalUrl);
+    params.set('videoCodecs', 'h264'); // Force H264 for browser compatibility
+    params.set('audioCodecs', 'aac');  // Force AAC for browser compatibility
+    params.set('format', 'mp4');       // Force MP4 container
+    
+    return `http://localhost:6969/api/hls/${sessionId}/master.m3u8?${params.toString()}`;
+  }
+
   private parseSubtitles(text: string): SubtitleCue[] {
     const cues: SubtitleCue[] = [];
     
@@ -445,28 +488,30 @@ export class StremioVideoSystem {
         debug: false,
         enableWorker: true,
         lowLatencyMode: false,
-        backBufferLength: 30,
-        maxBufferLength: 50,
-        maxMaxBufferLength: 80,
-        maxFragLookUpTolerance: 0,
-        maxBufferHole: 0,
-        appendErrorMaxRetry: 20,
-        nudgeMaxRetry: 20,
-        manifestLoadingTimeOut: 30000,
-        manifestLoadingMaxRetry: 10,
+        // Optimized buffer settings for Real-Debrid streams
+        backBufferLength: 20,        // Reduced to prevent memory issues
+        maxBufferLength: 30,         // Reduced from 50 - smaller buffer window
+        maxMaxBufferLength: 60,      // Reduced from 80
+        maxFragLookUpTolerance: 0.2, // Slightly more tolerant
+        maxBufferHole: 0.3,          // Allow small buffer holes
+        // Retry settings optimized for slow connections
+        appendErrorMaxRetry: 10,     // Reduced retries
+        nudgeMaxRetry: 10,
+        manifestLoadingTimeOut: 20000, // Reduced timeout
+        manifestLoadingMaxRetry: 5,    // Fewer retries
         fragLoadPolicy: {
           default: {
-            maxTimeToFirstByteMs: 10000,
-            maxLoadTimeMs: 120000,
+            maxTimeToFirstByteMs: 15000,  // More time for slow connections
+            maxLoadTimeMs: 60000,         // Reduced from 120s
             timeoutRetry: {
-              maxNumRetry: 20,
-              retryDelayMs: 0,
-              maxRetryDelayMs: 15
+              maxNumRetry: 10,            // Reduced retries
+              retryDelayMs: 500,          // Faster retry
+              maxRetryDelayMs: 8000       // Shorter max delay
             },
             errorRetry: {
-              maxNumRetry: 6,
+              maxNumRetry: 3,             // Much fewer error retries
               retryDelayMs: 1000,
-              maxRetryDelayMs: 15
+              maxRetryDelayMs: 5000       // Shorter error retry delay
             }
           }
         }
@@ -704,152 +749,187 @@ export class StremioVideoSystem {
     if (commandArgs && commandArgs.stream && typeof commandArgs.stream.url === 'string') {
       this.currentStream = commandArgs.stream.url;
       
-      if (!this.videoElement) {
-        this.createVideoElement();
+      // Always create fresh video element for new streams
+      if (this.videoElement) {
+        this.videoElement.remove();
+        this.videoElement = null;
       }
+      this.createVideoElement();
       
       logInfo(LogCategory.STREAM, 'Loading stream via load command', { 
         url: this.currentStream,
         autoplay: typeof commandArgs.autoplay === 'boolean' ? commandArgs.autoplay : true
       });
       
-      // Set video properties
+      // Check container format compatibility
       if (this.videoElement) {
-        this.videoElement.autoplay = typeof commandArgs.autoplay === 'boolean' ? commandArgs.autoplay : true;
+        const canPlayMp4H264 = this.videoElement.canPlayType('video/mp4; codecs="avc1.42E01E"');
+        const canPlayMp4H265 = this.videoElement.canPlayType('video/mp4; codecs="hev1.1.6.L93.B0"');
+        const canPlayMkvH264 = this.videoElement.canPlayType('video/x-matroska; codecs="avc1.42E01E"');
+        const canPlayMkvH265 = this.videoElement.canPlayType('video/x-matroska; codecs="hev1.1.6.L93.B0"');
         
-        if (commandArgs.time !== null && isFinite(commandArgs.time)) {
-          this.videoElement.currentTime = parseInt(commandArgs.time, 10) / 1000;
+        logInfo(LogCategory.STREAM, 'Browser codec support check', {
+          'MP4 H264': canPlayMp4H264 || 'not supported',
+          'MP4 H265': canPlayMp4H265 || 'not supported', 
+          'MKV H264': canPlayMkvH264 || 'not supported',
+          'MKV H265': canPlayMkvH265 || 'not supported'
+        });
+        
+        // Check if this stream needs transcoding (Stremio approach)
+        const needsTranscoding = this.shouldTranscode(this.currentStream, {
+          canPlayMkvH264,
+          canPlayMkvH265,
+          canPlayMp4H264,
+          canPlayMp4H265
+        });
+        
+        if (needsTranscoding) {
+          logInfo(LogCategory.STREAM, 'Stream needs transcoding to HLS', {
+            streamUrl: this.currentStream,
+            reason: 'Browser cannot play MKV container natively'
+          });
+        }
+      }
+      
+      // Set video properties - using non-null assertion since we just created the element
+      const videoEl = this.videoElement!;
+      videoEl.autoplay = typeof commandArgs.autoplay === 'boolean' ? commandArgs.autoplay : true;
+      
+      if (commandArgs.time !== null && isFinite(commandArgs.time)) {
+        videoEl.currentTime = parseInt(commandArgs.time, 10) / 1000;
+      }
+      
+      // Check if HLS or direct video
+      if (this.currentStream && this.shouldUseHLS(this.currentStream)) {
+        logInfo(LogCategory.STREAM, 'Setting up HLS streaming', { url: this.currentStream });
+        this.setupHLS(this.currentStream);
+      } else {
+        logInfo(LogCategory.STREAM, 'Setting direct video source', { url: this.currentStream });
+        
+        // CRITICAL: Use 'auto' for Real-Debrid streams to enable proper buffering
+        videoEl.preload = 'auto'; // MUST be 'auto' to allow browser buffering
+        
+        // Use transcoding server if needed, otherwise direct stream
+        if (needsTranscoding) {
+          // Generate HLS transcoding URL (Stremio approach)
+          const transcodingUrl = this.generateTranscodingUrl(this.currentStream!);
+          logInfo(LogCategory.STREAM, 'Using HLS transcoding for unsupported format', { 
+            originalUrl: this.currentStream,
+            transcodingUrl 
+          });
+          videoEl.src = transcodingUrl;
+        } else if (this.currentStream!.includes('real-debrid.com')) {
+          // Use direct Real-Debrid connection for supported formats
+          logInfo(LogCategory.STREAM, 'Using direct Real-Debrid stream (supported format)', { url: this.currentStream });
+          videoEl.src = this.currentStream!;
+          videoEl.crossOrigin = null;
+        } else {
+          videoEl.src = this.currentStream!;
         }
         
-        // Check if HLS or direct video
-        if (this.currentStream && this.shouldUseHLS(this.currentStream)) {
-          logInfo(LogCategory.STREAM, 'Setting up HLS streaming', { url: this.currentStream });
-          this.setupHLS(this.currentStream!);
-        } else {
-          logInfo(LogCategory.STREAM, 'Setting direct video source', { url: this.currentStream });
-          
-          // Aggressive preload strategy for Real-Debrid streams
-          // Force full preloading to overcome bandwidth limitations
-          this.videoElement.preload = 'auto';
-          this.videoElement.src = this.currentStream!;
-          
-          // Configure video element for optimal streaming and aggressive buffering
-          this.videoElement.setAttribute('playsinline', 'true');
-          this.videoElement.setAttribute('webkit-playsinline', 'true');
-          
-          // Force aggressive buffering for large files
-          if ('bufferData' in this.videoElement) {
-            (this.videoElement as any).bufferData = true;
-          }
-          
-          // Set network state optimization
-          this.videoElement.crossOrigin = null; // Remove CORS restrictions
-          
-          // Add load strategy optimization
-          this.videoElement.addEventListener('loadstart', () => {
-            logInfo(LogCategory.PERFORMANCE, 'Starting aggressive buffer loading');
-          });
-          
-          // Add intelligent buffer monitoring with buffer health management
-          let bufferHealthTimer: NodeJS.Timeout | null = null;
-          let lowBufferCount = 0;
-          
-          this.videoElement.addEventListener('progress', () => {
-            if (this.videoElement && this.videoElement.buffered.length > 0) {
-              const buffered = this.videoElement.buffered.end(this.videoElement.buffered.length - 1);
-              const current = this.videoElement.currentTime;
-              const bufferAhead = buffered - current;
-              
-              logDebug(LogCategory.PERFORMANCE, 'Buffer status', {
-                bufferAhead: `${bufferAhead.toFixed(1)}s`,
-                currentTime: `${current.toFixed(1)}s`,
-                bufferedEnd: `${buffered.toFixed(1)}s`,
-                bufferHealth: bufferAhead < 5 ? 'LOW' : bufferAhead < 15 ? 'MEDIUM' : 'HIGH'
-              });
-              
-              // More aggressive buffer management for Real-Debrid bandwidth limitations
-              if (bufferAhead < 5 && !this.videoElement.paused) {
-                lowBufferCount++;
-                logWarn(LogCategory.PERFORMANCE, 'Low buffer detected', {
-                  bufferAhead: `${bufferAhead.toFixed(1)}s`,
-                  lowBufferEvents: lowBufferCount,
-                  readyState: this.videoElement.readyState
-                });
-                
-                // For very low buffer or frequent buffering, pause longer to build up buffer
-                if (bufferAhead < 3 || lowBufferCount > 2) {
-                  logInfo(LogCategory.PERFORMANCE, 'Pausing for aggressive buffer recovery', {
-                    bufferAhead: `${bufferAhead.toFixed(1)}s`,
-                    pauseDuration: '5000ms'
-                  });
-                  this.videoElement.pause();
-                  
-                  if (bufferHealthTimer) clearTimeout(bufferHealthTimer);
-                  bufferHealthTimer = setTimeout(() => {
-                    if (this.videoElement && this.videoElement.paused) {
-                      const newBuffered = this.videoElement.buffered.length > 0 ? 
-                        this.videoElement.buffered.end(this.videoElement.buffered.length - 1) : 0;
-                      const newBufferAhead = newBuffered - this.videoElement.currentTime;
-                      
-                      logInfo(LogCategory.PERFORMANCE, 'Resuming after buffer recovery', {
-                        bufferBefore: `${bufferAhead.toFixed(1)}s`,
-                        bufferAfter: `${newBufferAhead.toFixed(1)}s`
-                      });
-                      
-                      this.videoElement.play().catch(() => {});
-                      lowBufferCount = Math.max(0, lowBufferCount - 1); // Gradually reduce counter
-                    }
-                  }, 5000); // Longer pause for better buffer building
-                }
-              } else if (bufferAhead > 10) {
-                // Reset counter when buffer is truly healthy
-                lowBufferCount = 0;
-                if (bufferHealthTimer) {
-                  clearTimeout(bufferHealthTimer);
-                  bufferHealthTimer = null;
-                }
-              }
-            }
-          });
-          
-          // Add comprehensive stall detection and recovery
-          this.videoElement.addEventListener('stalled', () => {
-            logWarn(LogCategory.PERFORMANCE, 'Video stalled, implementing recovery strategy', {
-              readyState: this.videoElement?.readyState,
-              networkState: this.videoElement?.networkState,
-              currentTime: this.videoElement?.currentTime.toFixed(1)
+        // Configure video element for stable streaming
+        videoEl.setAttribute('playsinline', 'true');
+        videoEl.setAttribute('webkit-playsinline', 'true');
+        
+        // Remove aggressive buffering that can cause stalls
+        videoEl.crossOrigin = null; // Remove CORS restrictions
+        
+        // Set reasonable buffer ahead target
+        if ('bufferAheadSec' in videoEl) {
+          (videoEl as any).bufferAheadSec = 10; // 10 second buffer target
+        }
+        
+        // Add load strategy optimization
+        videoEl.addEventListener('loadstart', () => {
+          logInfo(LogCategory.PERFORMANCE, 'Starting optimized buffer loading');
+        });
+        
+        // Improved buffer monitoring - NO automatic pausing
+        videoEl.addEventListener('progress', () => {
+          if (this.videoElement && this.videoElement.buffered.length > 0) {
+            const buffered = this.videoElement.buffered.end(this.videoElement.buffered.length - 1);
+            const current = this.videoElement.currentTime;
+            const bufferAhead = buffered - current;
+            
+            logDebug(LogCategory.PERFORMANCE, 'Buffer status', {
+              bufferAhead: `${bufferAhead.toFixed(1)}s`,
+              currentTime: `${current.toFixed(1)}s`,
+              bufferedEnd: `${buffered.toFixed(1)}s`,
+              bufferHealth: bufferAhead < 5 ? 'LOW' : bufferAhead < 15 ? 'MEDIUM' : 'HIGH',
+              readyState: this.videoElement.readyState,
+              networkState: this.videoElement.networkState
             });
             
-            // More aggressive recovery for bandwidth-limited streams
-            setTimeout(() => {
-              if (this.videoElement && this.videoElement.readyState < 3) {
-                logInfo(LogCategory.PERFORMANCE, 'Forcing reload for bandwidth recovery');
-                const currentTime = this.videoElement.currentTime;
-                this.videoElement.load();
-                
-                // Restore position after reload
-                this.videoElement.addEventListener('loadedmetadata', () => {
-                  if (this.videoElement && currentTime > 0) {
-                    this.videoElement.currentTime = currentTime;
-                  }
-                }, { once: true });
-              }
-            }, 2000); // Longer delay for bandwidth recovery
-          });
-          
-          // Add waiting event handling
-          this.videoElement.addEventListener('waiting', () => {
-            logDebug(LogCategory.PERFORMANCE, 'Video waiting for data');
-          });
-          
-          this.videoElement.load();
-        }
+            // Only log warnings for very low buffer, but DON'T pause automatically
+            if (bufferAhead < 2 && !this.videoElement.paused) {
+              logWarn(LogCategory.PERFORMANCE, 'Very low buffer detected', {
+                bufferAhead: `${bufferAhead.toFixed(1)}s`,
+                readyState: this.videoElement.readyState,
+                networkState: this.videoElement.networkState,
+                action: 'monitoring only - no automatic pausing'
+              });
+            }
+          }
+        });
         
-        // Emit property changes
-        this.emitPropChanged('stream', this.currentStream);
-        this.emitPropChanged('loaded', false);
-        this.emitPropChanged('buffering', true);
+        // Improved stall detection - less aggressive recovery
+        videoEl.addEventListener('stalled', () => {
+          logWarn(LogCategory.PERFORMANCE, 'Video stalled detected', {
+            readyState: this.videoElement?.readyState,
+            networkState: this.videoElement?.networkState,
+            currentTime: this.videoElement?.currentTime?.toFixed(1),
+            buffered: this.videoElement && this.videoElement.buffered.length > 0 ? 
+              this.videoElement.buffered.end(this.videoElement.buffered.length - 1).toFixed(1) : '0'
+          });
+          
+          // Only force reload as last resort after significant stall
+          setTimeout(() => {
+            if (this.videoElement && this.videoElement.readyState < 2 && this.videoElement.networkState === 2) {
+              logInfo(LogCategory.PERFORMANCE, 'Forcing reload due to persistent stall');
+              const currentTime = this.videoElement.currentTime;
+              this.videoElement.load();
+              
+              this.videoElement.addEventListener('loadedmetadata', () => {
+                if (this.videoElement && currentTime > 0) {
+                  this.videoElement.currentTime = currentTime;
+                }
+              }, { once: true });
+            }
+          }, 10000); // Much longer delay - only for truly stuck streams
+        });
+        
+        // Add waiting event handling
+        videoEl.addEventListener('waiting', () => {
+          logDebug(LogCategory.PERFORMANCE, 'Video waiting for data');
+        });
+        
+        // Add error handling to diagnose Real-Debrid issues
+        videoEl.addEventListener('error', () => {
+          logError(LogCategory.STREAM, 'Critical video load error', {
+            error: videoEl.error,
+            currentSrc: videoEl.currentSrc,
+            readyState: videoEl.readyState,
+            networkState: videoEl.networkState
+          });
+        }, { once: true });
+        
+        // Add load event to verify stream loading
+        videoEl.addEventListener('loadstart', () => {
+          logInfo(LogCategory.STREAM, 'Stream load started', {
+            originalUrl: this.currentStream?.substring(0, 100) + '...',
+            actualSrc: videoEl.src.substring(0, 100) + '...',
+            networkState: videoEl.networkState,
+            usingProxy: this.currentStream!.includes('real-debrid.com')
+          });
+        }, { once: true });
+        
+        videoEl.load();
       }
+      
+      // Emit property changes
+      this.emitPropChanged('stream', this.currentStream);
+      this.emitPropChanged('loaded', false);
+      this.emitPropChanged('buffering', true);
     }
   }
 
