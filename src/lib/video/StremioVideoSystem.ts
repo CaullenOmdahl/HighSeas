@@ -104,6 +104,7 @@ export class StremioVideoSystem {
   private createVideoElement() {
     if (this.videoElement) return;
 
+    console.log('StremioVideoSystem: Creating new video element');
     this.videoElement = document.createElement('video');
     this.videoElement.style.width = '100%';
     this.videoElement.style.height = '100%';
@@ -111,7 +112,7 @@ export class StremioVideoSystem {
     this.videoElement.controls = false;
     this.videoElement.preload = 'metadata';
     this.videoElement.playsInline = true;
-    this.videoElement.crossOrigin = 'anonymous';
+    // Don't set crossOrigin for Real-Debrid streams as they don't support CORS
 
     this.containerElement.appendChild(this.videoElement);
     this.setupVideoEventListeners();
@@ -134,7 +135,8 @@ export class StremioVideoSystem {
     });
 
     this.videoElement.addEventListener('timeupdate', () => {
-      const time = this.videoElement!.currentTime * 1000;
+      if (!this.videoElement) return;
+      const time = this.videoElement.currentTime * 1000;
       this.emitPropChanged('time', time);
       this.renderSubtitles(time);
     });
@@ -173,7 +175,8 @@ export class StremioVideoSystem {
     });
 
     this.videoElement.addEventListener('error', () => {
-      const error = this.videoElement!.error;
+      if (!this.videoElement) return;
+      const error = this.videoElement.error;
       if (error) {
         console.error('StremioVideoSystem: Video error:', error.code, error.message);
         this.emit('error', {
