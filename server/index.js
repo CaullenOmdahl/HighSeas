@@ -28,6 +28,10 @@ const rateLimitStore = new Map();
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
 const RATE_LIMIT_MAX = parseInt(process.env.RATE_LIMIT) || 100; // 100 requests per window
 
+// HLS Session tracking to prevent premature FFmpeg termination
+const hlsActiveSessions = new Map(); // sessionId -> { process, clients: Set, lastActivity }
+const hlsCleanupTimers = new Map(); // sessionId -> timeoutId
+
 // Rate limiting middleware
 const rateLimit = (req, res, next) => {
     const clientIP = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for']?.split(',')[0];
@@ -929,8 +933,7 @@ app.all('/api/proxy', async (req, res) => {
 });
 
 // HLS Transcoding endpoints (Stremio approach)
-// Store active transcoding sessions
-const transcodingSessions = new Map();
+// Transcoding session tracking is now handled by hlsActiveSessions above
 
 // Security: Validate media URLs to prevent command injection
 const validateMediaURL = (url) => {
@@ -1070,11 +1073,91 @@ segment2.ts?${queryString}
     }
 });
 
-// HLS Segment endpoint
+// HLS Session Management Functions
+const createHLSSession = (sessionId, mediaURL, clientId) => {
+    console.log('🔄 Creating new HLS session:', sessionId);
+    
+    const session = {
+        clients: new Set([clientId]),
+        lastActivity: Date.now(),
+        mediaURL: mediaURL,
+        process: null,
+        isGpuAttempt: process.env.ENABLE_AMD_GPU !== 'false'
+    };
+    
+    hlsActiveSessions.set(sessionId, session);
+    return session;
+};
+
+const addClientToSession = (sessionId, clientId) => {
+    const session = hlsActiveSessions.get(sessionId);
+    if (session) {
+        session.clients.add(clientId);
+        session.lastActivity = Date.now();
+        console.log(`👥 Client ${clientId} joined session ${sessionId}. Active clients: ${session.clients.size}`);
+        
+        // Cancel any pending cleanup
+        const cleanupTimer = hlsCleanupTimers.get(sessionId);
+        if (cleanupTimer) {
+            clearTimeout(cleanupTimer);
+            hlsCleanupTimers.delete(sessionId);
+            console.log('⏸️ Cancelled cleanup timer for active session:', sessionId);
+        }
+    }
+};
+
+const removeClientFromSession = (sessionId, clientId) => {
+    const session = hlsActiveSessions.get(sessionId);
+    if (!session) return;
+    
+    session.clients.delete(clientId);
+    console.log(`👋 Client ${clientId} left session ${sessionId}. Remaining clients: ${session.clients.size}`);
+    
+    // If no clients left, schedule cleanup
+    if (session.clients.size === 0) {
+        console.log(`⏰ Scheduling cleanup for session ${sessionId} in 30 seconds...`);
+        
+        const cleanupTimer = setTimeout(() => {
+            cleanupHLSSession(sessionId);
+        }, 30000); // 30 second delay
+        
+        hlsCleanupTimers.set(sessionId, cleanupTimer);
+    }
+};
+
+const cleanupHLSSession = (sessionId) => {
+    const session = hlsActiveSessions.get(sessionId);
+    if (!session) return;
+    
+    console.log('🧹 Cleaning up HLS session:', sessionId);
+    
+    // Kill FFmpeg process if running
+    if (session.process && !session.process.killed) {
+        session.process.kill('SIGTERM');
+        setTimeout(() => {
+            if (!session.process.killed) {
+                session.process.kill('SIGKILL');
+            }
+        }, 5000);
+    }
+    
+    // Clear timers and sessions
+    const cleanupTimer = hlsCleanupTimers.get(sessionId);
+    if (cleanupTimer) {
+        clearTimeout(cleanupTimer);
+        hlsCleanupTimers.delete(sessionId);
+    }
+    
+    hlsActiveSessions.delete(sessionId);
+    console.log('✅ Session cleanup complete:', sessionId);
+};
+
+// HLS Segment endpoint with session management
 app.get('/api/hls/:sessionId/segment:segmentId.ts', async (req, res) => {
     try {
         const { sessionId, segmentId } = req.params;
         const { mediaURL } = req.query;
+        const clientId = `${req.ip || req.connection.remoteAddress}_${Date.now()}`;
         
         if (!mediaURL) {
             return res.status(400).json({ error: 'mediaURL parameter required' });
@@ -1091,15 +1174,16 @@ app.get('/api/hls/:sessionId/segment:segmentId.ts', async (req, res) => {
         console.log('🎞️ HLS Segment request:', { 
             sessionId, 
             segmentId, 
+            clientId,
             mediaURL: sanitizeURLForLogging(mediaURL).substring(0, 100) + '...' 
         });
         
-        // Start transcoding if not already started for this session
-        if (!transcodingSessions.has(sessionId)) {
-            console.log('🔄 Starting FFmpeg transcoding session:', sessionId);
-            
-            // This is a simplified approach - in production you'd want proper segment management
-            // For now, we'll stream the raw transcoded output
+        // Get or create session
+        let session = hlsActiveSessions.get(sessionId);
+        if (!session) {
+            session = createHLSSession(sessionId, mediaURL, clientId);
+        } else {
+            addClientToSession(sessionId, clientId);
         }
         
         // Calculate segment start time (each segment is ~10 seconds)
@@ -1110,7 +1194,7 @@ app.get('/api/hls/:sessionId/segment:segmentId.ts', async (req, res) => {
         let ffmpegArgs;
         
         // Try AMD GPU acceleration first (VAAPI)
-        if (process.env.ENABLE_AMD_GPU !== 'false') {
+        if (session.isGpuAttempt) {
             ffmpegArgs = [
                 '-init_hw_device', 'vaapi=va:/dev/dri/renderD128', // AMD GPU device
                 '-hwaccel', 'vaapi',
@@ -1150,6 +1234,7 @@ app.get('/api/hls/:sessionId/segment:segmentId.ts', async (req, res) => {
         
         const startTranscode = (args, isGpuAttempt = false) => {
             const ffmpeg = spawn('ffmpeg', args);
+            session.process = ffmpeg;
             let isProcessClosed = false;
             
             // Centralized cleanup for FFmpeg process
@@ -1211,6 +1296,7 @@ app.get('/api/hls/:sessionId/segment:segmentId.ts', async (req, res) => {
                 // If GPU encoding failed and we haven't tried CPU fallback yet
                 if (code !== 0 && isGpuAttempt && stderrBuffer.includes('vaapi')) {
                     console.log('⚠️ AMD GPU encoding failed, falling back to CPU...');
+                    session.isGpuAttempt = false; // Update session to use CPU
                     
                     // Cleanup current process first
                     cleanup();
@@ -1245,6 +1331,7 @@ app.get('/api/hls/:sessionId/segment:segmentId.ts', async (req, res) => {
                 // If GPU encoding failed and we haven't tried CPU fallback yet
                 if (isGpuAttempt && !res.headersSent) {
                     console.log('⚠️ AMD GPU encoding error, falling back to CPU...');
+                    session.isGpuAttempt = false; // Update session to use CPU
                     
                     // Cleanup current process first
                     cleanup();
@@ -1272,12 +1359,6 @@ app.get('/api/hls/:sessionId/segment:segmentId.ts', async (req, res) => {
                 }
             });
             
-            // Handle client disconnection
-            res.on('close', () => {
-                console.log('🔌 Client disconnected, killing FFmpeg process');
-                cleanup();
-            });
-            
             // Handle process termination
             const processCleanup = () => {
                 cleanup();
@@ -1292,9 +1373,14 @@ app.get('/api/hls/:sessionId/segment:segmentId.ts', async (req, res) => {
             });
         };
         
+        // Handle client disconnection using session management
+        res.on('close', () => {
+            console.log('🔌 Client disconnected:', clientId);
+            removeClientFromSession(sessionId, clientId);
+        });
+        
         // Start transcoding with appropriate method
-        const isGpuAttempt = process.env.ENABLE_AMD_GPU !== 'false';
-        startTranscode(ffmpegArgs, isGpuAttempt);
+        startTranscode(ffmpegArgs, session.isGpuAttempt);
         
     } catch (error) {
         console.error('❌ HLS Segment error:', error);
