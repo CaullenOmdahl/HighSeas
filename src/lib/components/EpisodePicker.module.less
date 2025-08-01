@@ -1,11 +1,11 @@
 // Copyright (C) 2017-2023 Smart code 203358507 - Modified for HighSeas
 
 .episode-picker {
-    background: var(--color-surface);
+    background: var(--overlay-color);
     border-radius: 8px;
     padding: 1.5rem;
     margin: 1rem 0;
-    border: 1px solid var(--color-surface-lighter);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .picker-header {
@@ -44,8 +44,8 @@
 .episode-select {
     width: 100%;
     padding: 0.75rem;
-    background: var(--color-surface-lighter);
-    border: 1px solid var(--color-surface-lighter40);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 6px;
     color: var(--primary-foreground-color);
     font-size: 0.875rem;
@@ -53,17 +53,17 @@
     transition: border-color 0.2s ease;
     
     &:hover {
-        border-color: var(--color-surface-lighter60);
+        border-color: rgba(255, 255, 255, 0.2);
     }
     
     &:focus {
         outline: none;
-        border-color: var(--color-primary);
-        box-shadow: 0 0 0 3px var(--color-primary-transparent);
+        border-color: var(--primary-accent-color);
+        box-shadow: 0 0 0 3px rgba(123, 91, 245, 0.3);
     }
     
     option {
-        background: var(--color-surface);
+        background: var(--primary-background-color);
         color: var(--primary-foreground-color);
     }
 }
@@ -71,7 +71,7 @@
 .play-button {
     width: 100%;
     padding: 0.875rem 1.5rem;
-    background: var(--color-primary);
+    background: var(--primary-accent-color);
     border: none;
     border-radius: 6px;
     color: white;
@@ -81,17 +81,18 @@
     transition: all 0.2s ease;
     
     &:hover {
-        background: var(--color-primary-lighter);
+        background: rgba(123, 91, 245, 0.8);
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 12px rgba(123, 91, 245, 0.4);
     }
     
     &:active {
         transform: translateY(0);
+        background: rgba(123, 91, 245, 0.9);
     }
     
     &:disabled {
-        background: var(--color-surface-lighter);
+        background: rgba(255, 255, 255, 0.1);
         color: var(--color-placeholder-text);
         cursor: not-allowed;
         transform: none;

@@ -18,6 +18,8 @@ interface StreamSource {
     provider?: string;
     seeds?: number;
     size?: string;
+    fileIdx?: number;
+    bingeGroup?: string;
 }
 
 interface Video {
@@ -27,9 +29,12 @@ interface Video {
     episode: number;
     released?: Date;
     thumbnail?: string;
+    description?: string;
     watched?: boolean;
     progress?: number;
     upcoming?: boolean;
+    rating?: number;
+    tvdbId?: number;
 }
 
 const MetaDetails = memo(() => {
@@ -42,6 +47,7 @@ const MetaDetails = memo(() => {
     const [selectedEpisode, setSelectedEpisode] = useState<number>(1);
     const [loading, setLoading] = useState(true);
     const [streamLoading, setStreamLoading] = useState(false);
+    const [episodeLoadingId, setEpisodeLoadingId] = useState<string | null>(null);
     const [, setSelectedStream] = useState<StreamSource | null>(null);
 
     useEffect(() => {
@@ -81,18 +87,22 @@ const MetaDetails = memo(() => {
                 
                 setMeta(realMeta);
 
-                // If this is a series, load videos/episodes
+                // If this is a series, load videos/episodes - Follow Stremio standard
                 if (meta.type === 'series' && meta.videos && meta.videos.length > 0) {
                     const videoList: Video[] = meta.videos.map((video: any) => ({
                         id: video.id || `${meta.id}:${video.season}:${video.episode}`,
                         title: video.name || video.title || `Episode ${video.episode}`,
                         season: video.season || 1,
-                        episode: video.episode || 1,
-                        released: video.released ? new Date(video.released) : undefined,
+                        episode: video.episode || video.number || 1,
+                        released: video.released || video.firstAired ? 
+                            new Date(video.released || video.firstAired) : undefined,
                         thumbnail: video.thumbnail,
+                        description: video.description || video.overview,
                         watched: video.watched || false,
                         progress: video.progress || 0,
-                        upcoming: video.upcoming || false
+                        upcoming: video.upcoming || false,
+                        rating: video.rating ? parseFloat(video.rating) : undefined,
+                        tvdbId: video.tvdb_id
                     }));
                     
                     setVideos(videoList);
@@ -130,30 +140,34 @@ const MetaDetails = memo(() => {
             const data = await response.json();
             
             if (data.streams && data.streams.length > 0) {
-                // Convert Torrentio streams to our format
+                // Use Stremio standard stream format with minimal processing
                 const episodeStreams: StreamSource[] = data.streams.slice(0, 10).map((stream: any) => {
-                    // Parse quality from title
                     const title = stream.title || '';
-                    let quality = '720p'; // default
+                    const firstLine = title.split('\n')[0];
+                    
+                    // Simple quality detection
+                    let quality = '720p';
                     if (title.includes('2160p') || title.includes('4K')) quality = '4K';
                     else if (title.includes('1080p')) quality = '1080p';
                     else if (title.includes('720p')) quality = '720p';
                     else if (title.includes('480p')) quality = '480p';
                     
-                    // Extract size and seeds from title
+                    // Extract metadata from Stremio standard format
                     const sizeMatch = title.match(/💾\s*([\d.]+)\s*(GB|MB)/);
                     const seedsMatch = title.match(/👤\s*(\d+)/);
                     const providerMatch = title.match(/⚙️\s*([^\n]+)/);
                     
                     return {
-                        url: stream.url || stream.infoHash ? 
-                            `magnet:?xt=urn:btih:${stream.infoHash}&dn=${encodeURIComponent(title.split('\n')[0])}` : 
-                            `magnet:?demo=${episodeId}&quality=${quality}`, // Fallback to demo if no real magnet
-                        title: title.split('\n')[0], // First line only
+                        url: stream.infoHash ? 
+                            `magnet:?xt=urn:btih:${stream.infoHash}&dn=${encodeURIComponent(firstLine)}` : 
+                            stream.url || `magnet:?demo=${episodeId}`,
+                        title: firstLine,
                         quality,
-                        provider: providerMatch?.[1]?.trim() || 'Torrentio',
-                        seeds: seedsMatch ? parseInt(seedsMatch[1]) : Math.floor(Math.random() * 500) + 50,
-                        size: sizeMatch ? `${sizeMatch[1]} ${sizeMatch[2]}` : 'Unknown'
+                        provider: stream.name || providerMatch?.[1]?.trim() || 'Torrentio',
+                        seeds: seedsMatch ? parseInt(seedsMatch[1]) : undefined,
+                        size: sizeMatch ? `${sizeMatch[1]} ${sizeMatch[2]}` : undefined,
+                        fileIdx: stream.fileIdx,
+                        bingeGroup: stream.behaviorHints?.bingeGroup
                     };
                 });
                 
@@ -195,30 +209,34 @@ const MetaDetails = memo(() => {
             const data = await response.json();
             
             if (data.streams && data.streams.length > 0) {
-                // Convert Torrentio streams to our format
+                // Use Stremio standard stream format - consistent with episodes
                 const realStreams: StreamSource[] = data.streams.slice(0, 10).map((stream: any) => {
-                    // Parse quality from title
                     const title = stream.title || '';
-                    let quality = '720p'; // default
+                    const firstLine = title.split('\n')[0];
+                    
+                    // Simple quality detection
+                    let quality = '720p';
                     if (title.includes('2160p') || title.includes('4K')) quality = '4K';
                     else if (title.includes('1080p')) quality = '1080p';
                     else if (title.includes('720p')) quality = '720p';
                     else if (title.includes('480p')) quality = '480p';
                     
-                    // Extract size and seeds from title
+                    // Extract metadata from Stremio standard format
                     const sizeMatch = title.match(/💾\s*([\d.]+)\s*(GB|MB)/);
                     const seedsMatch = title.match(/👤\s*(\d+)/);
                     const providerMatch = title.match(/⚙️\s*([^\n]+)/);
                     
                     return {
-                        url: stream.url || stream.infoHash ? 
-                            `magnet:?xt=urn:btih:${stream.infoHash}&dn=${encodeURIComponent(title.split('\n')[0])}` : 
-                            `magnet:?demo=${id}&quality=${quality}`, // Fallback to demo if no real magnet
-                        title: title.split('\n')[0], // First line only
+                        url: stream.infoHash ? 
+                            `magnet:?xt=urn:btih:${stream.infoHash}&dn=${encodeURIComponent(firstLine)}` : 
+                            stream.url || `magnet:?demo=${id}`,
+                        title: firstLine,
                         quality,
-                        provider: providerMatch?.[1]?.trim() || 'Torrentio',
-                        seeds: seedsMatch ? parseInt(seedsMatch[1]) : Math.floor(Math.random() * 500) + 50,
-                        size: sizeMatch ? `${sizeMatch[1]} ${sizeMatch[2]}` : 'Unknown'
+                        provider: stream.name || providerMatch?.[1]?.trim() || 'Torrentio',
+                        seeds: seedsMatch ? parseInt(seedsMatch[1]) : undefined,
+                        size: sizeMatch ? `${sizeMatch[1]} ${sizeMatch[2]}` : undefined,
+                        fileIdx: stream.fileIdx,
+                        bingeGroup: stream.behaviorHints?.bingeGroup
                     };
                 });
                 
@@ -278,9 +296,11 @@ const MetaDetails = memo(() => {
         setSelectedSeason(video.season);
         setSelectedEpisode(video.episode);
         
-        // Load streams for this episode
+        // Load streams for this episode with loading state
         const episodeId = `${id}:${video.season}:${video.episode}`;
-        loadStreamsForEpisode(episodeId, video.season, video.episode);
+        setEpisodeLoadingId(episodeId);
+        loadStreamsForEpisode(episodeId, video.season, video.episode)
+            .finally(() => setEpisodeLoadingId(null));
     };
 
     const handleSeasonSelect = (season: number) => {
@@ -422,8 +442,10 @@ const MetaDetails = memo(() => {
                             <VideosList
                                 videos={videos}
                                 selectedSeason={selectedSeason}
+                                selectedEpisode={selectedEpisode}
                                 onVideoSelect={handleVideoSelect}
                                 onSeasonSelect={handleSeasonSelect}
+                                episodeLoadingId={episodeLoadingId}
                             />
                         </div>
                     )}

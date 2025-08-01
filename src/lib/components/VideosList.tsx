@@ -1,6 +1,6 @@
 // Copyright (C) 2017-2023 Smart code 203358507 - Modified for HighSeas
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import Icon from '../../stremio/components/Icon/Icon';
 import styles from './VideosList.module.less';
 
@@ -11,27 +11,35 @@ interface Video {
     episode: number;
     released?: Date;
     thumbnail?: string;
+    description?: string;
     watched?: boolean;
     progress?: number;
     upcoming?: boolean;
+    rating?: number;
+    tvdbId?: number;
 }
 
 interface VideosListProps {
     className?: string;
     videos: Video[];
     selectedSeason: number;
+    selectedEpisode?: number;
     onVideoSelect: (video: Video) => void;
     onSeasonSelect: (season: number) => void;
+    episodeLoadingId?: string | null;
 }
 
-const VideosList: React.FC<VideosListProps> = ({
+const VideosList: React.FC<VideosListProps> = memo(({
     className,
     videos,
     selectedSeason,
+    selectedEpisode,
     onVideoSelect,
-    onSeasonSelect
+    onSeasonSelect,
+    episodeLoadingId
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
+    const [visibleCount, setVisibleCount] = useState(20);
 
     // Get available seasons
     const seasons = useMemo(() => {
@@ -46,21 +54,37 @@ const VideosList: React.FC<VideosListProps> = ({
             .sort((a, b) => a.episode - b.episode);
     }, [videos, selectedSeason]);
 
-    // Filter videos by search query
+    // Filter videos by search query with pagination
     const filteredVideos = useMemo(() => {
-        if (!searchQuery.trim()) return videosForSeason;
+        let filtered = videosForSeason;
         
-        const query = searchQuery.toLowerCase();
-        return videosForSeason.filter(video => 
-            video.title?.toLowerCase().includes(query) ||
-            `s${video.season}e${video.episode}`.includes(query) ||
-            `season ${video.season} episode ${video.episode}`.includes(query)
-        );
-    }, [videosForSeason, searchQuery]);
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = videosForSeason.filter(video => 
+                video.title?.toLowerCase().includes(query) ||
+                `s${video.season}e${video.episode}`.includes(query) ||
+                `season ${video.season} episode ${video.episode}`.includes(query)
+            );
+        }
+        
+        return filtered.slice(0, visibleCount);
+    }, [videosForSeason, searchQuery, visibleCount]);
 
-    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const hasMoreEpisodes = videosForSeason.length > visibleCount;
+
+    const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(event.target.value);
-    };
+        setVisibleCount(20); // Reset pagination on search
+    }, []);
+
+    const handleLoadMore = useCallback(() => {
+        setVisibleCount(prev => prev + 20);
+    }, []);
+
+    const handleClearSearch = useCallback(() => {
+        setSearchQuery('');
+        setVisibleCount(20);
+    }, []);
 
     const formatDate = (date?: Date) => {
         if (!date) return '';
@@ -105,7 +129,7 @@ const VideosList: React.FC<VideosListProps> = ({
                     />
                     {searchQuery && (
                         <button
-                            onClick={() => setSearchQuery('')}
+                            onClick={handleClearSearch}
                             className={styles['clear-button']}
                         >
                             <Icon icon="close" />
@@ -122,7 +146,7 @@ const VideosList: React.FC<VideosListProps> = ({
                         <p>No episodes found</p>
                         {searchQuery && (
                             <button 
-                                onClick={() => setSearchQuery('')}
+                                onClick={handleClearSearch}
                                 className={styles['clear-search-button']}
                             >
                                 Clear search
@@ -130,13 +154,43 @@ const VideosList: React.FC<VideosListProps> = ({
                         )}
                     </div>
                 ) : (
-                    filteredVideos.map((video) => (
+                    filteredVideos.map((video) => {
+                        const handleClick = (e: React.MouseEvent | React.TouchEvent | React.KeyboardEvent) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (typeof onVideoSelect === 'function') {
+                                onVideoSelect(video);
+                            }
+                        };
+
+                        const isSelected = selectedEpisode && video.season === selectedSeason && video.episode === selectedEpisode;
+                        const isLoading = episodeLoadingId === video.id;
+                        
+                        return (
                         <div
                             key={video.id}
                             className={`${styles['episode-item']} ${
                                 video.watched ? styles['watched'] : ''
-                            } ${video.upcoming ? styles['upcoming'] : ''}`}
-                            onClick={() => onVideoSelect(video)}
+                            } ${video.upcoming ? styles['upcoming'] : ''} ${
+                                isSelected ? styles['selected'] : ''
+                            }`}
+                            onClick={handleClick}
+                            onTouchStart={handleClick}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Play ${video.title || `Episode ${video.episode}`} of Season ${video.season}`}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    handleClick(e);
+                                }
+                            }}
+                            style={{ 
+                                cursor: 'pointer', 
+                                pointerEvents: 'auto',
+                                minHeight: '48px',
+                                touchAction: 'manipulation'
+                            }}
                         >
                             <div className={styles['episode-thumbnail']}>
                                 {video.thumbnail ? (
@@ -190,15 +244,35 @@ const VideosList: React.FC<VideosListProps> = ({
                                 )}
                             </div>
 
-                            <div className={styles['play-button']}>
-                                <Icon icon="play" />
+                            <div 
+                                className={styles['play-button']}
+                                onClick={handleClick}
+                                onTouchStart={handleClick}
+                                role="button"
+                                tabIndex={-1}
+                                aria-label={`Play episode ${video.episode}`}
+                            >
+                                {isLoading ? <Icon icon="loading" /> : (isSelected ? <Icon icon="loading" /> : <Icon icon="play" />)}
                             </div>
                         </div>
-                    ))
+                        );
+                    })
+                )}
+                
+                {/* Load More Button */}
+                {!searchQuery && hasMoreEpisodes && (
+                    <div className={styles['load-more-container']}>
+                        <button 
+                            onClick={handleLoadMore}
+                            className={styles['load-more-button']}
+                        >
+                            Load More Episodes ({videosForSeason.length - visibleCount} remaining)
+                        </button>
+                    </div>
                 )}
             </div>
         </div>
     );
-};
+});
 
 export default VideosList;

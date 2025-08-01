@@ -19,8 +19,8 @@
 
 .season-button {
     padding: 0.75rem 1.25rem;
-    background: var(--color-surface-lighter);
-    border: 1px solid var(--color-surface-lighter40);
+    background: var(--overlay-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 6px;
     color: var(--primary-foreground-color);
     font-size: 0.875rem;
@@ -29,13 +29,13 @@
     transition: all 0.2s ease;
     
     &:hover {
-        background: var(--color-surface-lighter20);
-        border-color: var(--color-surface-lighter60);
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
     }
     
     &.active {
-        background: var(--color-primary);
-        border-color: var(--color-primary);
+        background: var(--primary-accent-color);
+        border-color: var(--primary-accent-color);
         color: white;
     }
 }
@@ -63,8 +63,8 @@
 .search-input {
     width: 100%;
     padding: 0.875rem 1rem 0.875rem 3rem;
-    background: var(--color-surface-lighter);
-    border: 1px solid var(--color-surface-lighter40);
+    background: var(--overlay-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     color: var(--primary-foreground-color);
     font-size: 0.875rem;
@@ -76,8 +76,8 @@
     
     &:focus {
         outline: none;
-        border-color: var(--color-primary);
-        box-shadow: 0 0 0 3px var(--color-primary-transparent);
+        border-color: var(--primary-accent-color);
+        box-shadow: 0 0 0 3px rgba(123, 91, 245, 0.3);
     }
 }
 
@@ -112,17 +112,29 @@
     align-items: center;
     gap: 1rem;
     padding: 1rem;
-    background: var(--color-surface);
-    border: 1px solid var(--color-surface-lighter);
+    background: var(--overlay-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
+    pointer-events: auto;
+    user-select: none;
     
     &:hover {
-        background: var(--color-surface-lighter);
-        border-color: var(--color-surface-lighter40);
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--primary-accent-color);
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(123, 91, 245, 0.2);
+    }
+    
+    &:active {
+        background: rgba(123, 91, 245, 0.2);
+        transform: translateY(0);
+    }
+    
+    &:focus {
+        outline: 2px solid var(--primary-accent-color);
+        outline-offset: 2px;
     }
     
     &.watched {
@@ -138,6 +150,12 @@
             box-shadow: none;
         }
     }
+    
+    &.selected {
+        background: rgba(123, 91, 245, 0.15);
+        border-color: var(--primary-accent-color);
+        box-shadow: 0 0 0 2px rgba(123, 91, 245, 0.3);
+    }
 }
 
 .episode-thumbnail {
@@ -147,7 +165,7 @@
     flex-shrink: 0;
     border-radius: 6px;
     overflow: hidden;
-    background: var(--color-surface-lighter);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .thumbnail-image {
@@ -176,7 +194,7 @@
 
 .progress-fill {
     height: 100%;
-    background: var(--color-primary);
+    background: var(--primary-accent-color);
     transition: width 0.3s ease;
 }
 
@@ -184,7 +202,7 @@
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
-    background: var(--color-primary);
+    background: var(--secondary-accent-color);
     color: white;
     border-radius: 50%;
     width: 24px;
@@ -211,8 +229,8 @@
 .episode-number {
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--color-primary);
-    background: var(--color-primary-transparent);
+    color: var(--primary-accent-color);
+    background: rgba(123, 91, 245, 0.2);
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
 }
@@ -239,15 +257,18 @@
 .upcoming-label {
     margin-top: 0.5rem;
     font-size: 0.75rem;
-    color: var(--color-warning);
+    color: var(--warning-accent-color);
     font-weight: 500;
 }
 
 .play-button {
-    color: var(--color-primary);
+    color: var(--primary-accent-color);
     font-size: 1.5rem;
     opacity: 0.7;
     transition: opacity 0.2s ease;
+    padding: 0.5rem;
+    border-radius: 50%;
+    background: rgba(123, 91, 245, 0.1);
 }
 
 .episode-item:hover .play-button {
@@ -276,7 +297,7 @@
 }
 
 .clear-search-button {
-    background: var(--color-primary);
+    background: var(--primary-accent-color);
     color: white;
     border: none;
     padding: 0.5rem 1rem;
@@ -286,7 +307,36 @@
     transition: background 0.2s ease;
     
     &:hover {
-        background: var(--color-primary-lighter);
+        background: rgba(123, 91, 245, 0.8);
+    }
+}
+
+// Load More Button
+.load-more-container {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 0;
+    margin-top: 1rem;
+}
+
+.load-more-button {
+    background: var(--primary-accent-color);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+        background: rgba(123, 91, 245, 0.8);
+        transform: translateY(-1px);
+    }
+    
+    &:active {
+        transform: translateY(0);
     }
 }
 

@@ -4,9 +4,14 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Load environment variables
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 6969;
@@ -14,6 +19,27 @@ const PORT = process.env.PORT || 6969;
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from React build
+app.use(express.static(path.join(__dirname, '../dist'), {
+    index: false // Don't automatically serve index.html for directories
+}));
+
+// History API fallback - immediately after static files
+app.use((req, res, next) => {
+    // Skip API routes
+    if (req.path.startsWith('/api/')) {
+        return next();
+    }
+    
+    // Skip requests for static files (have file extensions)
+    if (req.path.includes('.') && !req.path.endsWith('/')) {
+        return next();
+    }
+    
+    // Serve React app for all other requests
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
 
 // Real-Debrid API types and service (duplicated for local development)
 class RealDebridService {
@@ -299,6 +325,64 @@ app.get('/api/realdebrid', async (req, res) => {
     }
 });
 
+// Subtitle proxy endpoint to handle CORS
+app.get('/api/subtitles', async (req, res) => {
+    try {
+        const { url } = req.query;
+        
+        if (!url) {
+            return res.status(400).json({
+                error: 'URL parameter is required'
+            });
+        }
+
+        // Validate URL
+        try {
+            new URL(url);
+        } catch {
+            return res.status(400).json({
+                error: 'Invalid URL format'
+            });
+        }
+
+        console.log('🔤 Fetching subtitles from:', url);
+
+        // Fetch subtitle file with proper headers
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'HighSeas/1.0',
+                'Accept': 'text/plain, application/x-subrip, */*'
+            }
+        });
+
+        if (!response.ok) {
+            return res.status(response.status).json({
+                error: 'Failed to fetch subtitles',
+                message: `External server returned ${response.status}`
+            });
+        }
+
+        const contentType = response.headers.get('content-type') || 'text/plain';
+        const subtitleContent = await response.text();
+
+        // Set CORS headers and return subtitle content
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+        res.setHeader('Content-Type', contentType);
+        
+        res.send(subtitleContent);
+
+    } catch (error) {
+        console.error('❌ Subtitle proxy error:', error);
+        
+        return res.status(500).json({
+            error: 'Internal server error',
+            message: error instanceof Error ? error.message : 'Unknown error occurred'
+        });
+    }
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({ 
@@ -307,6 +391,7 @@ app.get('/api/health', (req, res) => {
         service: 'HighSeas Development Server'
     });
 });
+
 
 app.listen(PORT, () => {
     console.log(`🚀 HighSeas development server running on http://localhost:${PORT}`);
