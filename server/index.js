@@ -6,6 +6,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs/promises';
 
 // Load environment variables
 dotenv.config();
@@ -46,25 +47,56 @@ class RealDebridService {
     constructor(apiKey) {
         this.apiKey = apiKey;
         this.baseUrl = 'https://api.real-debrid.com/rest/1.0';
+        this.maxRetries = 3;
+        this.baseDelay = 1000; // 1 second
     }
 
-    async request(endpoint, options = {}) {
+    async sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async request(endpoint, options = {}, retryCount = 0) {
         const url = `${this.baseUrl}${endpoint}`;
         
-        const response = await fetch(url, {
-            ...options,
-            headers: {
-                'Authorization': `Bearer ${this.apiKey}`,
-                ...options.headers,
-            },
-        });
+        try {
+            console.log(`🌐 Real-Debrid API request: ${endpoint} (attempt ${retryCount + 1})`);
+            
+            const response = await fetch(url, {
+                ...options,
+                timeout: 15000, // 15 second timeout
+                headers: {
+                    'Authorization': `Bearer ${this.apiKey}`,
+                    ...options.headers,
+                },
+            });
 
-        if (!response.ok) {
-            const error = await response.text();
-            throw new Error(`Real-Debrid API error: ${response.status} - ${error}`);
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(`Real-Debrid API error: ${response.status} - ${error}`);
+            }
+
+            console.log(`✅ Real-Debrid API success: ${endpoint}`);
+            return response;
+            
+        } catch (error) {
+            console.error(`❌ Real-Debrid API error (attempt ${retryCount + 1}):`, error.message);
+            
+            // Check if it's a retryable error
+            const isRetryable = error.code === 'ETIMEDOUT' || 
+                               error.code === 'ECONNREFUSED' || 
+                               error.code === 'ENOTFOUND' ||
+                               error.name === 'FetchError' ||
+                               (error.message && error.message.includes('fetch failed'));
+            
+            if (isRetryable && retryCount < this.maxRetries) {
+                const delay = this.baseDelay * Math.pow(2, retryCount); // Exponential backoff
+                console.log(`⏳ Retrying in ${delay}ms...`);
+                await this.sleep(delay);
+                return this.request(endpoint, options, retryCount + 1);
+            }
+            
+            throw error;
         }
-
-        return response;
     }
 
     async addMagnet(magnetLink) {
@@ -116,22 +148,49 @@ class RealDebridService {
     }
 
     async convertMagnetToStream(magnetLink) {
+        const startTime = Date.now();
         try {
             console.log('🔄 Adding magnet to Real-Debrid...');
+            console.log('📋 Magnet link length:', magnetLink.length, 'characters');
             
             // Add magnet to Real-Debrid
             const addResult = await this.addMagnet(magnetLink);
             const torrentId = addResult.id;
             
             console.log('📥 Torrent added with ID:', torrentId);
+            console.log('⏱️  Add magnet completed in:', Date.now() - startTime, 'ms');
 
-            // Wait for magnet to be processed
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Wait for magnet to be processed with progressive timeout
+            console.log('⏳ Waiting for torrent processing...');
+            await this.sleep(2000);
             
-            // Get torrent info
-            const torrentInfo = await this.getTorrentInfo(torrentId);
+            // Get torrent info with retry
+            let attempts = 0;
+            let torrentInfo;
+            
+            while (attempts < 5) {
+                try {
+                    torrentInfo = await this.getTorrentInfo(torrentId);
+                    break;
+                } catch (error) {
+                    attempts++;
+                    console.log(`⚠️  Failed to get torrent info (attempt ${attempts}/5):`, error.message);
+                    if (attempts < 5) {
+                        await this.sleep(1000 * attempts); // Progressive delay
+                    }
+                }
+            }
+            
+            if (!torrentInfo) {
+                throw new Error('Failed to retrieve torrent information after 5 attempts');
+            }
             
             console.log('📊 Torrent status:', torrentInfo.status);
+            console.log('📦 Torrent info:', {
+                filename: torrentInfo.filename,
+                filesize: torrentInfo.bytes ? `${(torrentInfo.bytes / 1024 / 1024 / 1024).toFixed(2)} GB` : 'Unknown',
+                progress: torrentInfo.progress || 0
+            });
 
             if (torrentInfo.status === 'magnet_error') {
                 return {
@@ -225,13 +284,34 @@ class RealDebridService {
             };
 
         } catch (error) {
+            const totalTime = Date.now() - startTime;
             console.error('❌ Real-Debrid conversion failed:', error);
+            console.error('⏱️  Total processing time:', totalTime, 'ms');
+            console.error('🔍 Error details:', {
+                name: error.name,
+                code: error.code,
+                cause: error.cause?.code
+            });
+            
+            // Provide more specific error messages
+            let userMessage = 'Unknown error occurred';
+            if (error.code === 'ETIMEDOUT' || error.message.includes('timeout')) {
+                userMessage = 'Request timed out. Real-Debrid service may be slow or unavailable.';
+            } else if (error.code === 'ECONNREFUSED' || error.message.includes('fetch failed')) {
+                userMessage = 'Cannot connect to Real-Debrid service. Check internet connection.';
+            } else if (error.message.includes('API error')) {
+                userMessage = error.message;
+            } else if (error.message.includes('torrent information')) {
+                userMessage = 'Failed to retrieve torrent status. The torrent may be invalid.';
+            }
+            
             return {
                 streamUrl: '',
                 filename: '',
                 filesize: 0,
                 status: 'error',
-                message: error instanceof Error ? error.message : 'Unknown error'
+                message: userMessage,
+                technicalError: error.message
             };
         }
     }
@@ -379,6 +459,68 @@ app.get('/api/subtitles', async (req, res) => {
         return res.status(500).json({
             error: 'Internal server error',
             message: error instanceof Error ? error.message : 'Unknown error occurred'
+        });
+    }
+});
+
+// File logging endpoint for development mode
+app.post('/api/logs', async (req, res) => {
+    try {
+        const { logs } = req.body;
+        
+        if (!logs || !Array.isArray(logs)) {
+            return res.status(400).json({
+                error: 'Invalid logs format',
+                message: 'Expected logs array in request body'
+            });
+        }
+
+        // Create logs directory if it doesn't exist
+        const logsDir = path.join(__dirname, '../logs');
+        try {
+            await fs.access(logsDir);
+        } catch {
+            await fs.mkdir(logsDir, { recursive: true });
+        }
+
+        // Generate log filename with date
+        const date = new Date().toISOString().split('T')[0];
+        const logFile = path.join(logsDir, `app-${date}.log`);
+
+        // Format logs for file output
+        const logLines = logs.map(log => {
+            const levelStr = ['ERROR', 'WARN', 'INFO', 'DEBUG'][log.level] || 'UNKNOWN';
+            let line = `[${log.timestamp}] ${levelStr.padEnd(5)} ${log.category.padEnd(11)} ${log.message}`;
+            
+            if (log.data !== undefined) {
+                if (typeof log.data === 'object') {
+                    line += ` ${JSON.stringify(log.data)}`;
+                } else {
+                    line += ` ${log.data}`;
+                }
+            }
+            
+            if (log.stack) {
+                line += `\n${log.stack}`;
+            }
+            
+            return line;
+        });
+
+        // Append to log file
+        const logContent = logLines.join('\n') + '\n';
+        await fs.appendFile(logFile, logContent, 'utf8');
+
+        res.json({ 
+            status: 'ok', 
+            message: `Logged ${logs.length} entries to ${path.basename(logFile)}`
+        });
+
+    } catch (error) {
+        console.error('Failed to write logs to file:', error);
+        res.status(500).json({
+            error: 'Failed to write logs',
+            message: error.message
         });
     }
 });

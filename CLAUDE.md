@@ -6,10 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Core Development
 ```bash
-npm run dev                     # Start Vite development server (port 5173)
+./start.sh                      # Start both frontend (5173) and backend (6969) servers
+npm run dev                     # Start Vite development server only (port 5173)
+npm start                       # Start backend server only (port 6969)
 npm run build                   # Production build (TypeScript + Vite)
 npm run preview                 # Preview production build (port 4173)
-npm start                       # Start production server (port 6969)
 ```
 
 ### Code Quality & Security
@@ -163,6 +164,20 @@ Enhanced user experience with provider and quality selection:
 - E2E tests for complete user workflows
 - 80%+ code coverage required (configured in vitest.config.ts)
 - All tests must run without external API dependencies (mocked)
+
+### Development Logging and Debugging
+- **File Logging**: All logs are automatically written to daily files in `/logs/` directory in development mode
+- **Log Review Protocol**: After each testing session, check hard logs in `/logs/app-YYYY-MM-DD.log` for:
+  - Error patterns and stack traces
+  - Performance bottlenecks and buffer issues
+  - Stream loading failures or unexpected behavior
+  - UI component initialization problems
+- **Log Cleanup**: After addressing issues found in logs, purge log files to maintain clean debugging state:
+  ```bash
+  rm logs/*.log  # Clear all log files after review
+  ```
+- **Log Categories**: Use structured logging categories (PLAYER, STREAM, ADDON, NETWORK, UI, PERFORMANCE, SYSTEM)
+- **Testing Workflow**: Test → Check logs → Address issues → Purge logs → Repeat
 
 ### Performance Requirements
 - Bundle size target: <500KB total (currently ~280KB achieved)

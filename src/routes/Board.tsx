@@ -8,6 +8,7 @@ import MetaItem from '../stremio/components/MetaItem/MetaItem';
 import ContinueWatchingItem from '../stremio/components/ContinueWatchingItem/ContinueWatchingItem';
 import { Catalog, MetaItemPreview } from '../lib/types';
 // import stremioService from '../lib/services/stremio'; // Using direct API calls now
+import { logInfo, LogCategory } from '../lib/utils/logger';
 import styles from './Board.module.less';
 
 interface BoardProps {
@@ -23,6 +24,7 @@ const Board = memo(({ className }: BoardProps) => {
     useEffect(() => {
         const loadRealData = async () => {
             try {
+                logInfo(LogCategory.UI, 'Board component initializing, loading catalog data');
                 setLoading(true);
                 
                 // Fetch multiple catalogs from Stremio API
@@ -80,8 +82,13 @@ const Board = memo(({ className }: BoardProps) => {
 
                 setCatalogs(catalogsData);
                 setContinueWatching([]);
+                logInfo(LogCategory.UI, 'Board catalog data loaded successfully', { 
+                    catalogCount: catalogsData.length,
+                    totalItems: catalogsData.reduce((acc, cat) => acc + cat.items.length, 0)
+                });
                 
             } catch (error) {
+                logInfo(LogCategory.UI, 'Board catalog loading failed', { error: error instanceof Error ? error.message : 'Unknown error' });
                 console.error('API Error:', error);
                 // Show error state instead of empty
                 setCatalogs([]);

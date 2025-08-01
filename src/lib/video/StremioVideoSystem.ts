@@ -1,6 +1,8 @@
 // Complete Stremio Video Player System
 // TypeScript implementation with all Stremio features
 
+import { LogCategory, logInfo, logError, logDebug, logWarn } from '../utils/logger';
+
 export interface VideoProperties {
   stream?: string | null;
   loaded?: boolean;
@@ -57,7 +59,7 @@ export interface VideoAction {
   propName?: keyof VideoProperties;
   propValue?: any;
   commandName?: string;
-  commandArgs?: any[];
+  commandArgs?: any;
 }
 
 export interface VideoOptions {
@@ -104,7 +106,7 @@ export class StremioVideoSystem {
   private createVideoElement() {
     if (this.videoElement) return;
 
-    console.log('StremioVideoSystem: Creating new video element');
+    logInfo(LogCategory.PLAYER, 'Creating new video element');
     this.videoElement = document.createElement('video');
     this.videoElement.style.width = '100%';
     this.videoElement.style.height = '100%';
@@ -127,14 +129,17 @@ export class StremioVideoSystem {
     if (!this.videoElement) return;
 
     this.videoElement.addEventListener('loadstart', () => {
-      console.log('StremioVideoSystem: Video loadstart event');
+      logDebug(LogCategory.PLAYER, 'Video loadstart event');
       this.emitPropChanged('loaded', false);
       this.emitPropChanged('buffering', true);
     });
 
     this.videoElement.addEventListener('loadedmetadata', () => {
       if (!this.videoElement) return;
-      console.log('StremioVideoSystem: Video loadedmetadata event, duration:', this.videoElement.duration);
+      logInfo(LogCategory.PLAYER, 'Video loadedmetadata event', { 
+        duration: this.videoElement.duration,
+        durationFormatted: `${Math.floor(this.videoElement.duration / 60)}:${Math.floor(this.videoElement.duration % 60).toString().padStart(2, '0')}`
+      });
       this.emitPropChanged('loaded', true);
       this.emitPropChanged('duration', this.videoElement.duration * 1000);
       this.emitPropChanged('buffering', false);
@@ -187,7 +192,11 @@ export class StremioVideoSystem {
       if (!this.videoElement) return;
       const error = this.videoElement.error;
       if (error) {
-        console.error('StremioVideoSystem: Video error:', error.code, error.message);
+        logError(LogCategory.PLAYER, 'Video playback error', {
+          code: error.code,
+          message: error.message,
+          streamUrl: this.currentStream
+        });
         this.emit('error', {
           critical: true,
           message: `Video error: ${error.message}`,
@@ -314,7 +323,7 @@ export class StremioVideoSystem {
       // Use our subtitle proxy to avoid CORS issues
       const proxyUrl = `/api/subtitles?url=${encodeURIComponent(track.url)}`;
       
-      console.log('Loading subtitles via proxy:', proxyUrl);
+      logInfo(LogCategory.STREAM, 'Loading subtitles via proxy', { url: proxyUrl });
       
       const response = await fetch(proxyUrl);
       if (!response.ok) {
@@ -325,9 +334,15 @@ export class StremioVideoSystem {
       this.subtitlesData = this.parseSubtitles(text);
       this.currentSubtitleTrack = track;
       
-      console.log(`Loaded ${this.subtitlesData.length} subtitle cues for ${track.language || track.id}`);
+      logInfo(LogCategory.STREAM, 'Subtitles loaded successfully', {
+        cuesTotal: this.subtitlesData.length,
+        language: track.language || track.id
+      });
     } catch (error) {
-      console.error('Subtitle loading error:', error);
+      logError(LogCategory.STREAM, 'Subtitle loading failed', {
+        url: track.url,
+        language: track.language || track.id
+      }, error as Error);
       this.subtitlesData = [];
       this.currentSubtitleTrack = null;
       this.removeSubtitlesElement();
@@ -339,7 +354,7 @@ export class StremioVideoSystem {
     
     // Check if this is WebVTT format
     if (text.includes('WEBVTT')) {
-      console.log('Parsing WebVTT subtitles');
+      logDebug(LogCategory.STREAM, 'Parsing WebVTT subtitles');
       
       // Split by double newlines to get cue blocks
       const blocks = text.split(/\n\s*\n/);
@@ -378,7 +393,7 @@ export class StremioVideoSystem {
     } 
     // SRT format parser
     else if (text.includes('-->')) {
-      console.log('Parsing SRT subtitles');
+      logDebug(LogCategory.STREAM, 'Parsing SRT subtitles');
       
       const blocks = text.trim().split(/\n\s*\n/);
       
@@ -411,7 +426,7 @@ export class StremioVideoSystem {
       });
     }
     
-    console.log(`Parsed ${cues.length} subtitle cues`);
+    logDebug(LogCategory.STREAM, 'Subtitle parsing completed', { cuesTotal: cues.length });
     return cues;
   }
 
@@ -693,7 +708,10 @@ export class StremioVideoSystem {
         this.createVideoElement();
       }
       
-      console.log('StremioVideoSystem: Loading stream via load command:', this.currentStream);
+      logInfo(LogCategory.STREAM, 'Loading stream via load command', { 
+        url: this.currentStream,
+        autoplay: typeof commandArgs.autoplay === 'boolean' ? commandArgs.autoplay : true
+      });
       
       // Set video properties
       if (this.videoElement) {
@@ -704,12 +722,126 @@ export class StremioVideoSystem {
         }
         
         // Check if HLS or direct video
-        if (this.shouldUseHLS(this.currentStream)) {
-          console.log('StremioVideoSystem: Setting up HLS for', this.currentStream);
-          this.setupHLS(this.currentStream);
+        if (this.currentStream && this.shouldUseHLS(this.currentStream)) {
+          logInfo(LogCategory.STREAM, 'Setting up HLS streaming', { url: this.currentStream });
+          this.setupHLS(this.currentStream!);
         } else {
-          console.log('StremioVideoSystem: Setting direct video src for', this.currentStream);
-          this.videoElement.src = this.currentStream;
+          logInfo(LogCategory.STREAM, 'Setting direct video source', { url: this.currentStream });
+          
+          // Aggressive preload strategy for Real-Debrid streams
+          // Force full preloading to overcome bandwidth limitations
+          this.videoElement.preload = 'auto';
+          this.videoElement.src = this.currentStream!;
+          
+          // Configure video element for optimal streaming and aggressive buffering
+          this.videoElement.setAttribute('playsinline', 'true');
+          this.videoElement.setAttribute('webkit-playsinline', 'true');
+          
+          // Force aggressive buffering for large files
+          if ('bufferData' in this.videoElement) {
+            (this.videoElement as any).bufferData = true;
+          }
+          
+          // Set network state optimization
+          this.videoElement.crossOrigin = null; // Remove CORS restrictions
+          
+          // Add load strategy optimization
+          this.videoElement.addEventListener('loadstart', () => {
+            logInfo(LogCategory.PERFORMANCE, 'Starting aggressive buffer loading');
+          });
+          
+          // Add intelligent buffer monitoring with buffer health management
+          let bufferHealthTimer: NodeJS.Timeout | null = null;
+          let lowBufferCount = 0;
+          
+          this.videoElement.addEventListener('progress', () => {
+            if (this.videoElement && this.videoElement.buffered.length > 0) {
+              const buffered = this.videoElement.buffered.end(this.videoElement.buffered.length - 1);
+              const current = this.videoElement.currentTime;
+              const bufferAhead = buffered - current;
+              
+              logDebug(LogCategory.PERFORMANCE, 'Buffer status', {
+                bufferAhead: `${bufferAhead.toFixed(1)}s`,
+                currentTime: `${current.toFixed(1)}s`,
+                bufferedEnd: `${buffered.toFixed(1)}s`,
+                bufferHealth: bufferAhead < 5 ? 'LOW' : bufferAhead < 15 ? 'MEDIUM' : 'HIGH'
+              });
+              
+              // More aggressive buffer management for Real-Debrid bandwidth limitations
+              if (bufferAhead < 5 && !this.videoElement.paused) {
+                lowBufferCount++;
+                logWarn(LogCategory.PERFORMANCE, 'Low buffer detected', {
+                  bufferAhead: `${bufferAhead.toFixed(1)}s`,
+                  lowBufferEvents: lowBufferCount,
+                  readyState: this.videoElement.readyState
+                });
+                
+                // For very low buffer or frequent buffering, pause longer to build up buffer
+                if (bufferAhead < 3 || lowBufferCount > 2) {
+                  logInfo(LogCategory.PERFORMANCE, 'Pausing for aggressive buffer recovery', {
+                    bufferAhead: `${bufferAhead.toFixed(1)}s`,
+                    pauseDuration: '5000ms'
+                  });
+                  this.videoElement.pause();
+                  
+                  if (bufferHealthTimer) clearTimeout(bufferHealthTimer);
+                  bufferHealthTimer = setTimeout(() => {
+                    if (this.videoElement && this.videoElement.paused) {
+                      const newBuffered = this.videoElement.buffered.length > 0 ? 
+                        this.videoElement.buffered.end(this.videoElement.buffered.length - 1) : 0;
+                      const newBufferAhead = newBuffered - this.videoElement.currentTime;
+                      
+                      logInfo(LogCategory.PERFORMANCE, 'Resuming after buffer recovery', {
+                        bufferBefore: `${bufferAhead.toFixed(1)}s`,
+                        bufferAfter: `${newBufferAhead.toFixed(1)}s`
+                      });
+                      
+                      this.videoElement.play().catch(() => {});
+                      lowBufferCount = Math.max(0, lowBufferCount - 1); // Gradually reduce counter
+                    }
+                  }, 5000); // Longer pause for better buffer building
+                }
+              } else if (bufferAhead > 10) {
+                // Reset counter when buffer is truly healthy
+                lowBufferCount = 0;
+                if (bufferHealthTimer) {
+                  clearTimeout(bufferHealthTimer);
+                  bufferHealthTimer = null;
+                }
+              }
+            }
+          });
+          
+          // Add comprehensive stall detection and recovery
+          this.videoElement.addEventListener('stalled', () => {
+            logWarn(LogCategory.PERFORMANCE, 'Video stalled, implementing recovery strategy', {
+              readyState: this.videoElement?.readyState,
+              networkState: this.videoElement?.networkState,
+              currentTime: this.videoElement?.currentTime.toFixed(1)
+            });
+            
+            // More aggressive recovery for bandwidth-limited streams
+            setTimeout(() => {
+              if (this.videoElement && this.videoElement.readyState < 3) {
+                logInfo(LogCategory.PERFORMANCE, 'Forcing reload for bandwidth recovery');
+                const currentTime = this.videoElement.currentTime;
+                this.videoElement.load();
+                
+                // Restore position after reload
+                this.videoElement.addEventListener('loadedmetadata', () => {
+                  if (this.videoElement && currentTime > 0) {
+                    this.videoElement.currentTime = currentTime;
+                  }
+                }, { once: true });
+              }
+            }, 2000); // Longer delay for bandwidth recovery
+          });
+          
+          // Add waiting event handling
+          this.videoElement.addEventListener('waiting', () => {
+            logDebug(LogCategory.PERFORMANCE, 'Video waiting for data');
+          });
+          
           this.videoElement.load();
         }
         
