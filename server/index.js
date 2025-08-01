@@ -636,7 +636,7 @@ app.post('/api/logs', async (req, res) => {
         }
 
         // Create logs directory if it doesn't exist
-        const logsDir = path.join(__dirname, '../logs');
+        const logsDir = process.env.LOGS_DIR || path.join(__dirname, '../logs');
         try {
             await fs.access(logsDir);
         } catch {

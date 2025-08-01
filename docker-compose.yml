@@ -47,6 +47,11 @@ x-casaos:
         3. Configure Stremio addons in Settings > Addons
         4. Browse and stream content from the main dashboard
         
+        **Viewing Logs:**
+        - Application logs: /DATA/AppData/highseas-streaming/logs/
+        - Docker logs: `docker logs highseas-streaming`
+        - Real-time logs: `docker logs -f highseas-streaming`
+        
         **Troubleshooting:**
         - Check logs if Real-Debrid integration fails
         - Ensure FFmpeg is working for MKV transcoding
@@ -56,7 +61,7 @@ x-casaos:
   hostname: ''
   store_app_id: highseas-streaming
   project_url: https://github.com/CaullenOmdahl/HighSeas
-  version: "1.0.0"
+  version: "1.1.1"
   envs:
     - container: REAL_DEBRID_TOKEN
       description: 
@@ -82,6 +87,10 @@ x-casaos:
       description:
         en_us: Enable AMD GPU transcoding (VAAPI)
       default: "true"
+    - container: LOGS_DIR
+      description:
+        en_us: Directory for application logs
+      default: "/app/logs"
   volumes:
     - container: /app/data
       description:
@@ -106,6 +115,7 @@ services:
       PORT: 6969
       BODY_SIZE_LIMIT: 10mb
       LOG_LEVEL: info
+      LOGS_DIR: /app/logs
       REAL_DEBRID_TOKEN: ${REAL_DEBRID_TOKEN:-}
       ENABLE_AMD_GPU: ${ENABLE_AMD_GPU:-true}
     volumes:
