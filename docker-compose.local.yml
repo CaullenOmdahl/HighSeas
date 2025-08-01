@@ -1,0 +1,55 @@
+version: '3.8'
+
+# Local Development Docker Compose
+# Use this for building and running locally
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: highseas-streaming:latest
+    container_name: highseas-streaming-local
+    restart: unless-stopped
+    ports:
+      - "6969:6969"
+    environment:
+      - NODE_ENV=production
+      - PORT=6969
+      - BODY_SIZE_LIMIT=10mb
+      - LOG_LEVEL=info
+      - REAL_DEBRID_TOKEN=${REAL_DEBRID_TOKEN:-}
+      - ENABLE_AMD_GPU=${ENABLE_AMD_GPU:-true}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    devices:
+      - /dev/dri:/dev/dri  # AMD GPU device access for VAAPI transcoding
+    group_add:
+      - video  # Add container to video group for GPU access
+    healthcheck:
+      test: ["CMD", "node", "-e", "http.get('http://localhost:6969/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    # Logging configuration
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+networks:
+  default:
+    name: highseas-local-network
+    driver: bridge

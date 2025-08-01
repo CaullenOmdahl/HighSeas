@@ -5,6 +5,8 @@ This guide provides multiple ways to deploy HighSeas using Docker.
 ## 🚀 Quick Start Options
 
 ### Option 1: Docker Compose (Recommended)
+
+#### Development Build (Local)
 ```bash
 # Clone the repository
 git clone https://github.com/CaullenOmdahl/HighSeas.git
@@ -14,8 +16,17 @@ cd HighSeas
 cp .env.example .env
 # Edit .env and add your Real-Debrid token
 
-# Build and run with Docker Compose
+# Build and run with Docker Compose (builds locally)
 docker-compose up -d
+# or: npm run docker:up
+```
+
+#### Production (Pre-built Image from Docker Hub)
+```bash
+# Use pre-built image from Docker Hub
+docker-compose up -d
+# or: npm run docker:up
+# or: docker-compose -f docker-compose.production.yml up -d
 ```
 
 ### Option 2: Manual Docker Build
@@ -29,15 +40,15 @@ npm run docker:run
 # or: docker run -d --name highseas-streaming -p 6969:6969 --restart unless-stopped highseas-streaming:latest
 ```
 
-### Option 3: Pre-built Image (When Available)
+### Option 3: Pre-built Image (Docker Hub)
 ```bash
 # Pull and run pre-built image
-docker pull ghcr.io/caullenom/highseas-streaming:latest
+docker pull caullen/highseas-streaming:latest
 docker run -d --name highseas-streaming \
   -p 6969:6969 \
   -e REAL_DEBRID_TOKEN=your_token_here \
   --restart unless-stopped \
-  ghcr.io/caullenom/highseas-streaming:latest
+  caullen/highseas-streaming:latest
 ```
 
 ## 🔧 Configuration

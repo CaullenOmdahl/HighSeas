@@ -10,7 +10,7 @@ echo "============================"
 
 # Configuration
 IMAGE_NAME="highseas-streaming"
-REGISTRY="ghcr.io/caullenom"
+REGISTRY="caullen"
 VERSION=${1:-latest}
 FULL_IMAGE_NAME="${REGISTRY}/${IMAGE_NAME}:${VERSION}"
 
@@ -19,13 +19,13 @@ echo "  - Image: ${FULL_IMAGE_NAME}"
 echo "  - Architecture: linux/amd64"
 echo "  - Context: ."
 
-# Check if logged into GitHub Container Registry
+# Check if logged into Docker Hub
 echo ""
-echo "🔐 Checking GitHub Container Registry authentication..."
-if ! docker info | grep -q "ghcr.io"; then
-    echo "⚠️  Please login to GitHub Container Registry first:"
-    echo "   docker login ghcr.io -u your-username"
-    echo "   Use a Personal Access Token with write:packages scope"
+echo "🔐 Checking Docker Hub authentication..."
+if ! docker info | grep -q "docker.io"; then
+    echo "⚠️  Please login to Docker Hub first:"
+    echo "   docker login"
+    echo "   Use your Docker Hub username and password"
     exit 1
 fi
 
@@ -64,7 +64,7 @@ docker stop highseas-test
 
 # Push to registry
 echo ""
-echo "📤 Publishing to GitHub Container Registry..."
+echo "📤 Publishing to Docker Hub..."
 docker push "${FULL_IMAGE_NAME}"
 
 if [ $? -eq 0 ]; then

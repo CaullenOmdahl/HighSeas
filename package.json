@@ -12,6 +12,8 @@
 		"docker:run": "docker run -d --name highseas-streaming -p 6969:6969 --restart unless-stopped highseas-streaming:latest",
 		"docker:publish": "./publish-docker.sh",
 		"docker:up": "docker-compose up -d",
+		"docker:up:local": "docker-compose -f docker-compose.local.yml up -d",
+		"docker:up:prod": "docker-compose -f docker-compose.production.yml up -d",
 		"docker:down": "docker-compose down",
 		"format": "prettier --write .",
 		"lint": "eslint .",

@@ -44,15 +44,12 @@ x-casaos:
 
 services:
   app:
-    # Option 1: Use pre-built image (when available)
-    # image: ghcr.io/caullenom/highseas-streaming:latest
-    
-    # Option 2: Build locally (recommended for now)
-    build:
-      context: .
-      dockerfile: Dockerfile
-      tags:
-        - highseas-streaming:latest
+    # Use pre-built image from Docker Hub
+    image: caullen/highseas-streaming:latest
+    # Uncomment to build locally instead:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
     container_name: highseas
     restart: unless-stopped
     ports:
