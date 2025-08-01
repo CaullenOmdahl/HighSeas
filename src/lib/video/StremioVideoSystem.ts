@@ -121,11 +121,13 @@ export class StremioVideoSystem {
     if (!this.videoElement) return;
 
     this.videoElement.addEventListener('loadstart', () => {
+      console.log('StremioVideoSystem: Video loadstart event');
       this.emitPropChanged('loaded', false);
       this.emitPropChanged('buffering', true);
     });
 
     this.videoElement.addEventListener('loadedmetadata', () => {
+      console.log('StremioVideoSystem: Video loadedmetadata event, duration:', this.videoElement!.duration);
       this.emitPropChanged('loaded', true);
       this.emitPropChanged('duration', this.videoElement!.duration * 1000);
       this.emitPropChanged('buffering', false);
@@ -173,6 +175,7 @@ export class StremioVideoSystem {
     this.videoElement.addEventListener('error', () => {
       const error = this.videoElement!.error;
       if (error) {
+        console.error('StremioVideoSystem: Video error:', error.code, error.message);
         this.emit('error', {
           critical: true,
           message: `Video error: ${error.message}`,
@@ -426,9 +429,12 @@ export class StremioVideoSystem {
 
     // Check if this is an HLS stream
     if (this.shouldUseHLS(streamUrl)) {
+      console.log('StremioVideoSystem: Setting up HLS for', streamUrl);
       this.setupHLS(streamUrl);
     } else {
+      console.log('StremioVideoSystem: Setting direct video src for', streamUrl);
       this.videoElement.src = streamUrl;
+      this.videoElement.load();
     }
   }
 

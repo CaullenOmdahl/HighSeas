@@ -2,30 +2,52 @@
 > highseas-tv@1.0.0 start
 > node server/index.js
 
-[dotenv@17.2.1] injecting env (5) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[dotenv@17.2.1] injecting env (5) from .env -- tip: ⚙️  enable debug logging with { debug: true }
 🚀 HighSeas development server running on http://localhost:6969
 🔗 Real-Debrid API available at http://localhost:6969/api/realdebrid
 ✅ Real-Debrid token found in environment
+🔤 Fetching subtitles from: https://raw.githubusercontent.com/brenopolanski/html5-video-webvtt-example/master/MIB2-subtitles-pt-BR.vtt
 🔄 Processing magnet link conversion...
 🔄 Adding magnet to Real-Debrid...
-❌ Real-Debrid conversion failed: Error: Real-Debrid API error: 503 - {
-	"error": "internal_error",
-	"error_code": -1
-}
-    at RealDebridService.request (file:///home/caullen/GitHub/stremio-netflix/server/index.js:38:19)
+❌ Real-Debrid conversion failed: TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async RealDebridService.addMagnet (file:///home/caullen/GitHub/stremio-netflix/server/index.js:48:26)
-    at async RealDebridService.convertMagnetToStream (file:///home/caullen/GitHub/stremio-netflix/server/index.js:97:31)
-    at async file:///home/caullen/GitHub/stremio-netflix/server/index.js:245:24
+    at async RealDebridService.request (file:///home/caullen/GitHub/stremio-netflix/server/index.js:54:26)
+    at async RealDebridService.addMagnet (file:///home/caullen/GitHub/stremio-netflix/server/index.js:74:26)
+    at async RealDebridService.convertMagnetToStream (file:///home/caullen/GitHub/stremio-netflix/server/index.js:123:31)
+    at async file:///home/caullen/GitHub/stremio-netflix/server/index.js:271:24 {
+  [cause]: AggregateError [ETIMEDOUT]: 
+      at internalConnectMultiple (node:net:1134:18)
+      at internalConnectMultiple (node:net:1210:5)
+      at Timeout.internalConnectMultipleTimeout (node:net:1742:5)
+      at listOnTimeout (node:internal/timers:590:11)
+      at process.processTimers (node:internal/timers:523:7) {
+    code: 'ETIMEDOUT',
+    [errors]: [ [Error], [Error], [Error], [Error] ]
+  }
+}
 🔄 Processing magnet link conversion...
 🔄 Adding magnet to Real-Debrid...
 🔄 Processing magnet link conversion...
 🔄 Adding magnet to Real-Debrid...
-📥 Torrent added with ID: E7OSNNT3XJFTS
-📥 Torrent added with ID: DOVRTT4NMOEX4
+❌ Real-Debrid conversion failed: TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async RealDebridService.request (file:///home/caullen/GitHub/stremio-netflix/server/index.js:54:26)
+    at async RealDebridService.addMagnet (file:///home/caullen/GitHub/stremio-netflix/server/index.js:74:26)
+    at async RealDebridService.convertMagnetToStream (file:///home/caullen/GitHub/stremio-netflix/server/index.js:123:31)
+    at async file:///home/caullen/GitHub/stremio-netflix/server/index.js:271:24 {
+  [cause]: AggregateError [ETIMEDOUT]: 
+      at internalConnectMultiple (node:net:1134:18)
+      at internalConnectMultiple (node:net:1210:5)
+      at Timeout.internalConnectMultipleTimeout (node:net:1742:5)
+      at listOnTimeout (node:internal/timers:590:11)
+      at process.processTimers (node:internal/timers:523:7) {
+    code: 'ETIMEDOUT',
+    [errors]: [ [Error], [Error], [Error], [Error] ]
+  }
+}
+📥 Torrent added with ID: 5VVAHFF5E4VZY
 📊 Torrent status: waiting_files_selection
 🎥 Selecting video file: /How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv
-📊 Torrent status: waiting_files_selection
-🎥 Selecting video file: /How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv
-✅ Stream ready: How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv
 ✅ Stream ready: How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv

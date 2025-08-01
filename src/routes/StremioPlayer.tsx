@@ -104,9 +104,20 @@ const StremioPlayer = memo(() => {
   // Handle video errors
   const handleVideoError = useCallback((error: any) => {
     console.error('Video error:', error);
+    
+    // Check if this is a Real-Debrid link that may have expired
+    if (streamUrl?.includes('real-debrid.com') && (error.code === 4 || error.message?.includes('404') || error.message?.includes('Network error'))) {
+      setError('🔄 Stream link expired, refreshing...');
+      // Go back to the previous page to select a new stream
+      setTimeout(() => {
+        window.history.back();
+      }, 2000);
+      return;
+    }
+    
     setError(error.message || 'Video playback error');
     setLoading(false);
-  }, []);
+  }, [streamUrl, convertMagnetToStream]);
 
   // Handle video end
   const handleVideoEnded = useCallback(() => {
@@ -138,25 +149,7 @@ const StremioPlayer = memo(() => {
     setSubtitleTracks(demoSubtitles);
   }, [id, streamUrl]);
 
-  // Initialize player
-  useEffect(() => {
-    
-    if (!streamUrl) {
-      console.log('No stream URL provided, showing error');
-      setError('No stream URL provided. Please select a stream from the episode details page.');
-      setLoading(false);
-      return;
-    }
-
-    // For valid streams, show the player after a brief delay
-    const initTimeout = setTimeout(() => {
-      setLoading(false);
-    }, 500);
-
-    return () => clearTimeout(initTimeout);
-  }, [streamUrl]);
-
-  const convertMagnetToStream = async (magnetLink: string) => {
+  const convertMagnetToStream = useCallback(async (magnetLink: string) => {
     try {
       setLoading(true);
       setError(null);
@@ -201,7 +194,31 @@ const StremioPlayer = memo(() => {
       setError(`🚫 Real-Debrid Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setLoading(false);
     }
-  };
+  }, [streamUrl]);
+
+  // Initialize player
+  useEffect(() => {
+    
+    if (!streamUrl) {
+      console.log('No stream URL provided, showing error');
+      setError('No stream URL provided. Please select a stream from the episode details page.');
+      setLoading(false);
+      return;
+    }
+
+    // Check if this is a magnet link that needs conversion
+    if (streamUrl.startsWith('magnet:')) {
+      convertMagnetToStream(streamUrl);
+      return;
+    }
+
+    // For valid HTTP streams, show the player after a brief delay
+    const initTimeout = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+
+    return () => clearTimeout(initTimeout);
+  }, [streamUrl, convertMagnetToStream]);
 
   // Control handlers
   const handlePlayPause = () => {
