@@ -75,8 +75,32 @@ COPY --from=builder --chown=highseas:nodejs /app/server server/
 # Create logs directory with proper permissions
 RUN mkdir -p /app/logs && chown -R highseas:nodejs /app/logs
 
-# Switch to non-root user
-USER highseas
+# Install su-exec for user switching first
+RUN apk add --no-cache su-exec
+
+# Create simple entrypoint that handles permissions
+COPY <<EOF /app/docker-entrypoint.sh
+#!/bin/sh
+# Try to fix mounted directory permissions as root, then switch to user
+if [ -d "/app/logs" ]; then
+    echo "Checking /app/logs permissions..."
+    if ! su-exec highseas touch /app/logs/.test 2>/dev/null; then
+        echo "Fixing logs directory permissions..."
+        chown -R 1001:1001 /app/logs 2>/dev/null || {
+            echo "Could not fix permissions. Setting LOGS_DISABLED=true"
+            export LOGS_DISABLED=true
+        }
+        rm -f /app/logs/.test 2>/dev/null
+    else
+        echo "Logs directory permissions OK"
+        rm -f /app/logs/.test
+    fi
+fi
+
+# Run as highseas user
+exec su-exec highseas "\$@"
+EOF
+RUN chmod +x /app/docker-entrypoint.sh
 
 # Expose port 6969
 EXPOSE 6969
@@ -90,6 +114,6 @@ ENV BODY_SIZE_LIMIT=0
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node -e "http.get('http://localhost:6969/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" || exit 1
 
-# Start the application with dumb-init for proper signal handling
-ENTRYPOINT ["dumb-init", "--"]
+# Start the application with dumb-init and permission fixing
+ENTRYPOINT ["dumb-init", "--", "/app/docker-entrypoint.sh"]
 CMD ["node", "server/index.js"]

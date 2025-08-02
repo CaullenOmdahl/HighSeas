@@ -19,6 +19,12 @@ const __dirname = path.dirname(__filename);
 
 // Setup automatic file logging for console output
 const setupFileLogging = async () => {
+    // Skip file logging if disabled due to permission issues
+    if (process.env.LOGS_DISABLED === 'true') {
+        console.log('File logging disabled due to permission issues. Logs will only appear in container console.');
+        return;
+    }
+    
     const logsDir = process.env.LOGS_DIR || path.join(__dirname, '../logs');
     
     try {
