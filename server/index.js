@@ -178,13 +178,13 @@ app.use((req, res, next) => {
     // Remove server information
     res.removeHeader('X-Powered-By');
     
-    // Content Security Policy - Disabled for testing (personal use only)
-    // res.setHeader('Content-Security-Policy', 
-    //     "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: http: https:; " +
-    //     "media-src 'self' 'unsafe-inline' data: blob: http: https: *.real-debrid.com; " +
-    //     "connect-src 'self' http: https: *.real-debrid.com; " +
-    //     "object-src 'none';"
-    // );
+    // Content Security Policy - Allow HLS transcoding endpoints
+    res.setHeader('Content-Security-Policy', 
+        "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: http: https:; " +
+        "media-src 'self' 'unsafe-inline' data: blob: http: https: *.real-debrid.com localhost:*; " +
+        "connect-src 'self' http: https: *.real-debrid.com localhost:* ws: wss:; " +
+        "object-src 'none';"
+    );
     
     // Prevent clickjacking
     res.setHeader('X-Frame-Options', 'DENY');
