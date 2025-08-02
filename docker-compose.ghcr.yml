@@ -1,0 +1,62 @@
+# Docker Compose for GitHub Container Registry
+# Pulls pre-built images from ghcr.io instead of building locally
+
+services:
+  highseas-streaming:
+    image: ghcr.io/caullenomdahl/highseas:latest
+    container_name: highseas-ghcr
+    ports:
+      - "6969:6969"
+    environment:
+      - NODE_ENV=production
+      - PORT=6969
+      - BODY_SIZE_LIMIT=10mb
+      - LOG_LEVEL=info
+      - LOGS_DIR=/app/logs
+      - REAL_DEBRID_TOKEN=${REAL_DEBRID_TOKEN:-}
+      - ENABLE_AMD_GPU=${ENABLE_AMD_GPU:-true}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:6969,http://localhost:4173}
+    volumes:
+      - highseas-logs:/app/logs
+      - /dev/dri:/dev/dri  # AMD GPU access for VAAPI
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128  # AMD GPU device
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6969/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - highseas-network
+    labels:
+      - "com.highseas.description=HighSeas Premium Streaming Server"
+      - "com.highseas.source=ghcr.io"
+    # Resource limits for production
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+    # Logging configuration
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '50m'
+        max-file: '5'
+
+volumes:
+  highseas-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /tmp/highseas-logs
+
+networks:
+  highseas-network:
+    driver: bridge
