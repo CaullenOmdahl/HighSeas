@@ -1343,8 +1343,12 @@ app.get('/api/hls/:sessionId/segment:segmentId.ts', async (req, res) => {
                 '-acodec', 'aac',
                 '-f', 'mpegts',
                 '-preset', 'ultrafast',
-                '-g', '30', // GOP size
+                '-g', '25', // GOP size aligned with 10s segments at 25fps
+                '-keyint_min', '25', // Minimum GOP size
+                '-force_key_frames', 'expr:gte(t,n_forced*10)', // Force keyframes every 10 seconds
                 '-sc_threshold', '0',
+                '-avoid_negative_ts', 'make_zero', // Fix DTS issues
+                '-fflags', '+genpts', // Generate proper timestamps
                 '-'
             ];
             console.log('🚀 Using AMD GPU acceleration (VAAPI)');
@@ -1359,8 +1363,12 @@ app.get('/api/hls/:sessionId/segment:segmentId.ts', async (req, res) => {
                 '-f', 'mpegts',
                 '-preset', 'ultrafast', // Fast encoding for real-time
                 '-tune', 'zerolatency',
-                '-g', '30', // GOP size
+                '-g', '25', // GOP size aligned with 10s segments at 25fps
+                '-keyint_min', '25', // Minimum GOP size
+                '-force_key_frames', 'expr:gte(t,n_forced*10)', // Force keyframes every 10 seconds
                 '-sc_threshold', '0',
+                '-avoid_negative_ts', 'make_zero', // Fix DTS issues
+                '-fflags', '+genpts', // Generate proper timestamps
                 '-'
             ];
             console.log('💻 Using CPU transcoding (fallback)');
