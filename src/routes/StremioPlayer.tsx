@@ -120,18 +120,24 @@ const StremioPlayer = memo(() => {
     // Check if this is a Real-Debrid link that may have expired
     if (streamUrl?.includes('real-debrid.com') && (error.code === 4 || error.message?.includes('404') || error.message?.includes('Network error'))) {
       // If we have the original magnet and haven't exceeded retry limit, refresh the link
-      if (originalMagnet && linkRefreshCount < 3) {
-        setError(`🔄 Stream link expired, refreshing... (attempt ${linkRefreshCount + 1}/3)`);
+      if (originalMagnet && linkRefreshCount < 6) {
+        const currentAttempt = linkRefreshCount + 1;
+        setError(`🔄 Stream link expired, refreshing... (attempt ${currentAttempt}/6)`);
         setLinkRefreshCount(prev => prev + 1);
         setLoading(true);
+        
+        // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 32s
+        const retryDelay = Math.min(1000 * Math.pow(2, linkRefreshCount), 32000);
+        
+        console.log(`🔄 Retrying Real-Debrid link refresh (attempt ${currentAttempt}/6) with ${retryDelay}ms delay`);
         
         // Convert the original magnet link again to get a fresh Real-Debrid URL
         setTimeout(() => {
           convertMagnetToStream(originalMagnet);
-        }, 1000);
+        }, retryDelay);
         return;
-      } else if (linkRefreshCount >= 3) {
-        setError('❌ Unable to refresh stream link after 3 attempts. Please try selecting a different quality or source.');
+      } else if (linkRefreshCount >= 6) {
+        setError('❌ Unable to refresh stream link after 6 attempts. The Real-Debrid service may be experiencing issues. Please try selecting a different quality or source.');
         setLoading(false);
         return;
       } else {

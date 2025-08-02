@@ -633,6 +633,74 @@ app.get('/api/realdebrid', async (req, res) => {
     }
 });
 
+// Local Torrentio manifest endpoint
+app.get('/api/addon/manifest.json', async (req, res) => {
+    try {
+        
+        // Read the local manifest file
+        const manifestPath = path.join(__dirname, '..', 'reference', 'manifest.json');
+        const manifestData = await fs.readFile(manifestPath, 'utf8');
+        const manifest = JSON.parse(manifestData);
+        
+        // Set appropriate headers for Stremio addon
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Cache-Control', 'no-cache');
+        
+        console.log('📋 Serving local Torrentio manifest');
+        res.status(200).json(manifest);
+        
+    } catch (error) {
+        console.error('❌ Error serving manifest:', error);
+        res.status(500).json({
+            error: 'Failed to load manifest',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
+// Local Torrentio stream endpoint proxy
+app.get('/api/addon/stream/:type/:id.json', async (req, res) => {
+    try {
+        const { type, id } = req.params;
+        
+        // Proxy the request to the actual Torrentio service
+        // This uses the same Real-Debrid configuration as the reference manifest
+        const torrentioUrl = `https://torrentio.strem.fun/stream/${type}/${id}.json`;
+        
+        console.log(`🎬 Proxying stream request: ${type}/${id}`);
+        
+        const response = await fetch(torrentioUrl, {
+            headers: {
+                'Accept': 'application/json',
+                'User-Agent': 'HighSeas/1.1.9'
+            },
+            timeout: 15000
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Torrentio API error: ${response.status}`);
+        }
+        
+        const streamData = await response.json();
+        
+        // Set appropriate headers
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+        
+        console.log(`✅ Found ${streamData.streams?.length || 0} streams for ${type}/${id}`);
+        res.status(200).json(streamData);
+        
+    } catch (error) {
+        console.error('❌ Error proxying stream request:', error);
+        res.status(500).json({
+            error: 'Failed to fetch streams',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
 // Subtitle proxy endpoint to handle CORS
 app.get('/api/subtitles', async (req, res) => {
     try {

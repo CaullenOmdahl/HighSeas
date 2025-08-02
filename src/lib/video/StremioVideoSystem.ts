@@ -501,33 +501,42 @@ export class StremioVideoSystem {
         debug: false,
         enableWorker: true,
         lowLatencyMode: false,
-        // Optimized buffer settings for Real-Debrid streams
-        backBufferLength: 20,        // Reduced to prevent memory issues
-        maxBufferLength: 30,         // Reduced from 50 - smaller buffer window
-        maxMaxBufferLength: 60,      // Reduced from 80
-        maxFragLookUpTolerance: 0.2, // Slightly more tolerant
-        maxBufferHole: 0.3,          // Allow small buffer holes
-        // Retry settings optimized for slow connections
-        appendErrorMaxRetry: 10,     // Reduced retries
-        nudgeMaxRetry: 10,
-        manifestLoadingTimeOut: 20000, // Reduced timeout
-        manifestLoadingMaxRetry: 5,    // Fewer retries
+        // Buffer settings optimized for CHUNK_DEMUXER_ERROR prevention
+        backBufferLength: 15,        // Smaller back buffer
+        maxBufferLength: 20,         // Much smaller forward buffer 
+        maxMaxBufferLength: 40,      // Reduced max buffer to prevent DTS issues
+        maxFragLookUpTolerance: 0.1, // Stricter fragment tolerance
+        maxBufferHole: 0.2,          // Smaller buffer holes allowed
+        // Append settings to handle DTS sequence errors
+        appendErrorMaxRetry: 3,      // Fewer append retries to fail fast
+        nudgeMaxRetry: 3,            // Fewer nudge retries
+        nudgeOffset: 0.05,           // Smaller nudge offset
+        // Loading timeouts optimized for codec compatibility
+        manifestLoadingTimeOut: 15000,
+        manifestLoadingMaxRetry: 3,
+        levelLoadingTimeOut: 10000,  // Level loading timeout
+        levelLoadingMaxRetry: 3,
         fragLoadPolicy: {
           default: {
-            maxTimeToFirstByteMs: 15000,  // More time for slow connections
-            maxLoadTimeMs: 60000,         // Reduced from 120s
+            maxTimeToFirstByteMs: 10000, // Faster timeout for codec detection
+            maxLoadTimeMs: 30000,        // Shorter load time
             timeoutRetry: {
-              maxNumRetry: 10,            // Reduced retries
-              retryDelayMs: 500,          // Faster retry
-              maxRetryDelayMs: 8000       // Shorter max delay
+              maxNumRetry: 2,            // Fewer timeout retries
+              retryDelayMs: 1000,
+              maxRetryDelayMs: 4000
             },
             errorRetry: {
-              maxNumRetry: 3,             // Much fewer error retries
-              retryDelayMs: 1000,
-              maxRetryDelayMs: 5000       // Shorter error retry delay
+              maxNumRetry: 1,            // Only 1 error retry for codec issues
+              retryDelayMs: 2000,
+              maxRetryDelayMs: 3000
             }
           }
-        }
+        },
+        // Additional settings for codec compatibility
+        forceKeyFrameOnDiscontinuity: true,  // Force keyframes for better sync
+        alignAVDelay: true,                  // Align audio/video timing
+        startFragPrefetch: true,             // Prefetch start fragment
+        testBandwidth: false                 // Don't test bandwidth to avoid delays
       });
 
       this.hlsInstance.loadSource(streamUrl);
@@ -538,17 +547,56 @@ export class StremioVideoSystem {
       });
 
       this.hlsInstance.on(Hls.Events.ERROR, (_event: any, data: any) => {
+        logError(LogCategory.STREAM, 'HLS Error', data);
+        
         if (data.fatal) {
-          this.emit('error', {
-            critical: true,
-            message: `HLS Error: ${data.type} - ${data.details}`
-          });
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              logInfo(LogCategory.STREAM, 'Attempting to recover from network error');
+              this.hlsInstance.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              logInfo(LogCategory.STREAM, 'Attempting to recover from media error');
+              this.hlsInstance.recoverMediaError();
+              break;
+            default:
+              // For CHUNK_DEMUXER errors and other fatal errors, switch to direct playback
+              if (data.details?.includes('CHUNK_DEMUXER') || data.details?.includes('DTS')) {
+                logWarn(LogCategory.STREAM, 'CHUNK_DEMUXER error detected, switching to direct playback');
+                this.fallbackToDirectPlayback(this.currentStream);
+              } else {
+                this.emit('error', {
+                  critical: true,
+                  message: `HLS Error: ${data.type} - ${data.details}`,
+                  code: 'HLS_ERROR'
+                });
+              }
+              break;
+          }
         }
       });
     } else {
       // Fallback for Safari and other browsers with native HLS support
       this.videoElement!.src = streamUrl;
     }
+  }
+
+  private fallbackToDirectPlayback(streamUrl: string | null) {
+    if (!streamUrl) return;
+    
+    logInfo(LogCategory.STREAM, 'Falling back to direct video playback');
+    
+    // Clean up HLS instance
+    if (this.hlsInstance) {
+      this.hlsInstance.destroy();
+      this.hlsInstance = null;
+    }
+    
+    // Set video source directly
+    this.videoElement!.src = streamUrl;
+    this.videoElement!.load();
+    
+    logInfo(LogCategory.STREAM, 'Direct playback fallback initiated');
   }
 
   private updateAudioTracks() {
@@ -825,7 +873,7 @@ export class StremioVideoSystem {
           logInfo(LogCategory.STREAM, 'Using HLS transcoding for unsupported format', { 
             originalUrl: this.currentStream,
             transcodingUrl,
-            sessionId: transcodingUrl.match(/\/api\/hls\/([^\/]+)\//)?.[1] || 'unknown'
+            sessionId: transcodingUrl.match(/\/api\/hls\/([^/]+)\//)?.[1] || 'unknown'
           });
           
           // Important: Set src to the HLS transcoding endpoint

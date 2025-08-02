@@ -71,6 +71,7 @@ COPY --from=builder --chown=highseas:nodejs /app/dist dist/
 COPY --from=builder --chown=highseas:nodejs /app/node_modules node_modules/
 COPY --from=builder --chown=highseas:nodejs /app/package.json .
 COPY --from=builder --chown=highseas:nodejs /app/server server/
+COPY --from=builder --chown=highseas:nodejs /app/reference reference/
 
 # Create logs directory with proper permissions
 RUN mkdir -p /app/logs && chown -R highseas:nodejs /app/logs

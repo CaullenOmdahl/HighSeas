@@ -1,8 +1,8 @@
 // React Wrapper for Stremio Video Player
-// Integrates Stremio's video architecture with React
+// Integrates Stremio's video architecture with React - Uses official HTMLVideo reference implementation
 
 import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
-import { StremioVideoSystem } from './StremioVideoSystem';
+import { StremioHTMLVideo } from './StremioHTMLVideo';
 
 export interface VideoProperties {
   stream?: string | null;
@@ -77,7 +77,7 @@ export interface StremioVideoPlayerRef {
 
 const StremioVideoPlayer = forwardRef<StremioVideoPlayerRef, StremioVideoPlayerProps>((props, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoInstanceRef = useRef<any>(null);
+  const videoInstanceRef = useRef<StremioHTMLVideo | null>(null);
 
   useImperativeHandle(ref, () => ({
     dispatch: (action: any) => {
@@ -87,7 +87,7 @@ const StremioVideoPlayer = forwardRef<StremioVideoPlayerRef, StremioVideoPlayerP
     },
     destroy: () => {
       if (videoInstanceRef.current) {
-        videoInstanceRef.current.destroy();
+        videoInstanceRef.current.dispatch({ type: 'command', commandName: 'destroy' });
         videoInstanceRef.current = null;
       }
     }
@@ -99,10 +99,10 @@ const StremioVideoPlayer = forwardRef<StremioVideoPlayerRef, StremioVideoPlayerP
       return;
     }
 
-    console.log('StremioVideoPlayer: Initializing video system');
+    console.log('StremioVideoPlayer: Initializing official HTMLVideo system');
     
-    // Create Stremio video system instance
-    videoInstanceRef.current = new StremioVideoSystem({
+    // Create Stremio HTMLVideo instance (official reference implementation)
+    videoInstanceRef.current = new StremioHTMLVideo({
       containerElement: containerRef.current
     });
 
@@ -126,7 +126,7 @@ const StremioVideoPlayer = forwardRef<StremioVideoPlayerRef, StremioVideoPlayerP
     ];
 
     propsToObserve.forEach(propName => {
-      videoInstanceRef.current.dispatch({
+      videoInstanceRef.current?.dispatch({
         type: 'observeProp',
         propName
       });
@@ -134,20 +134,23 @@ const StremioVideoPlayer = forwardRef<StremioVideoPlayerRef, StremioVideoPlayerP
 
     return () => {
       if (videoInstanceRef.current) {
-        videoInstanceRef.current.destroy();
+        videoInstanceRef.current.dispatch({ type: 'command', commandName: 'destroy' });
         videoInstanceRef.current = null;
       }
     };
   }, [props.onPropChanged, props.onError, props.onEnded]);
 
-  // Handle subtitle track changes
+  // Handle subtitle track changes - using official Stremio pattern
   useEffect(() => {
     if (!videoInstanceRef.current) return;
 
     if (props.subtitleTrack) {
-      videoInstanceRef.current.loadSubtitleTrack(props.subtitleTrack);
-    } else {
-      videoInstanceRef.current.loadSubtitleTrack(null);
+      // Use official Stremio command pattern for subtitle selection
+      videoInstanceRef.current.dispatch({
+        type: 'setProp',
+        propName: 'selectedSubtitlesTrackId',
+        propValue: props.subtitleTrack.id
+      });
     }
   }, [props.subtitleTrack]);
 
@@ -157,9 +160,12 @@ const StremioVideoPlayer = forwardRef<StremioVideoPlayerRef, StremioVideoPlayerP
 
     if (props.stream !== undefined) {
       videoInstanceRef.current.dispatch({
-        type: 'setProp',
-        propName: 'stream',
-        propValue: props.stream
+        type: 'command',
+        commandName: 'load',
+        commandArgs: {
+          stream: { url: props.stream },
+          autoplay: false
+        }
       });
     }
   }, [props.stream]);
@@ -168,11 +174,17 @@ const StremioVideoPlayer = forwardRef<StremioVideoPlayerRef, StremioVideoPlayerP
     if (!videoInstanceRef.current) return;
 
     if (props.paused !== undefined) {
-      videoInstanceRef.current.dispatch({
-        type: 'setProp',
-        propName: 'paused',
-        propValue: props.paused
-      });
+      if (props.paused) {
+        videoInstanceRef.current.dispatch({
+          type: 'command',
+          commandName: 'pause'
+        });
+      } else {
+        videoInstanceRef.current.dispatch({
+          type: 'command',
+          commandName: 'play'
+        });
+      }
     }
   }, [props.paused]);
 
@@ -181,9 +193,9 @@ const StremioVideoPlayer = forwardRef<StremioVideoPlayerRef, StremioVideoPlayerP
 
     if (props.time !== undefined) {
       videoInstanceRef.current.dispatch({
-        type: 'setProp',
-        propName: 'time',
-        propValue: props.time
+        type: 'command',
+        commandName: 'seek',
+        commandArgs: [props.time * 1000] // Convert to milliseconds
       });
     }
   }, [props.time]);

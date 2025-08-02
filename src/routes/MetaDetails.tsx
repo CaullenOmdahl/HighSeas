@@ -131,8 +131,8 @@ const MetaDetails = memo(() => {
         try {
             setStreamLoading(true);
             
-            // Fetch streams for specific episode from Torrentio addon
-            const response = await fetch(`https://torrentio.strem.fun/stream/series/${episodeId}.json`);
+            // Fetch streams for specific episode from local Torrentio addon
+            const response = await fetch(`/api/addon/stream/series/${episodeId}.json`);
             if (!response.ok) {
                 throw new Error(`Failed to fetch episode streams: ${response.status}`);
             }
@@ -200,8 +200,8 @@ const MetaDetails = memo(() => {
         try {
             setStreamLoading(true);
             
-            // Fetch real streams from Torrentio addon
-            const response = await fetch(`https://torrentio.strem.fun/stream/${type}/${id}.json`);
+            // Fetch real streams from local Torrentio addon
+            const response = await fetch(`/api/addon/stream/${type}/${id}.json`);
             if (!response.ok) {
                 throw new Error(`Failed to fetch streams: ${response.status}`);
             }

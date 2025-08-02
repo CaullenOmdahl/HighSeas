@@ -1,6 +1,10 @@
-# 🏴‍☠️ HighSeas - Perfect Netflix-Style Streaming Interface
+# HighSeas - Premium Streaming Interface
 
-A **production-ready**, enterprise-grade Netflix-style streaming interface powered by Stremio addons with comprehensive security, performance optimizations, accessibility features, and complete testing coverage.
+[![Version](https://img.shields.io/badge/version-1.1.9-blue.svg)](https://github.com/CaullenOmdahl/HighSeas)
+[![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](https://hub.docker.com/r/caullen/highseas-streaming)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+A Netflix-style streaming interface for Stremio addons with Real-Debrid integration, HLS transcoding for MKV files, and enhanced mobile controls.
 
 ## ✨ Core Features
 

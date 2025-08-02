@@ -1,39 +1,59 @@
-chunk-RFXM5SOW.js?v=905c193d:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
-tt11655566:1 [Intervention] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: http://localhost:5174/fonts/PlusJakartaSans.ttf
-StremioPlayer.tsx:56 StremioPlayer params: {id: 'tt11655566', streamUrl: 'https://sgp1-4.download.real-debrid.com/d/2LRWLQOR…V%20iTA%20EnG%20AC3%20Sub%20iTA%20EnG-MIRCrew.mkv', quality: '4K', season: null, episode: null}
-StremioPlayer.tsx:56 StremioPlayer params: {id: 'tt11655566', streamUrl: 'https://sgp1-4.download.real-debrid.com/d/2LRWLQOR…V%20iTA%20EnG%20AC3%20Sub%20iTA%20EnG-MIRCrew.mkv', quality: '4K', season: null, episode: null}
+StremioPlayer.tsx:60 StremioPlayer params: Object
 StremioVideoPlayer.tsx:102 StremioVideoPlayer: Initializing video system
-StremioVideoSystem.ts:107 StremioVideoSystem: Creating new video element
-StremioVideoSystem.ts:662 StremioVideoSystem: Loading stream via load command: https://sgp1-4.download.real-debrid.com/d/2LRWLQORTGLSW80/Lilo%20And%20Stitch%20%282025%29%202160p%20H265%20HDR10%20DV%20iTA%20EnG%20AC3%20Sub%20iTA%20EnG-MIRCrew.mkv
-StremioVideoSystem.ts:677 StremioVideoSystem: Setting direct video src for https://sgp1-4.download.real-debrid.com/d/2LRWLQORTGLSW80/Lilo%20And%20Stitch%20%282025%29%202160p%20H265%20HDR10%20DV%20iTA%20EnG%20AC3%20Sub%20iTA%20EnG-MIRCrew.mkv
-StremioVideoPlayer.tsx:102 StremioVideoPlayer: Initializing video system
-StremioVideoSystem.ts:107 StremioVideoSystem: Creating new video element
-StremioVideoSystem.ts:662 StremioVideoSystem: Loading stream via load command: https://sgp1-4.download.real-debrid.com/d/2LRWLQORTGLSW80/Lilo%20And%20Stitch%20%282025%29%202160p%20H265%20HDR10%20DV%20iTA%20EnG%20AC3%20Sub%20iTA%20EnG-MIRCrew.mkv
-StremioVideoSystem.ts:677 StremioVideoSystem: Setting direct video src for https://sgp1-4.download.real-debrid.com/d/2LRWLQORTGLSW80/Lilo%20And%20Stitch%20%282025%29%202160p%20H265%20HDR10%20DV%20iTA%20EnG%20AC3%20Sub%20iTA%20EnG-MIRCrew.mkv
-StremioVideoSystem.ts:125 StremioVideoSystem: Video loadstart event
-StremioVideoSystem.ts:125 StremioVideoSystem: Video loadstart event
-StremioVideoSystem.ts:131 Uncaught TypeError: Cannot read properties of null (reading 'duration')
-    at HTMLVideoElement.<anonymous> (StremioVideoSystem.ts:131:99)
-(anonymous) @ StremioVideoSystem.ts:131
-StremioVideoSystem.ts:131 StremioVideoSystem: Video loadedmetadata event, duration: 6563.968
-StremioVideoSystem.ts:161 Uncaught TypeError: Cannot read properties of null (reading 'buffered')
-    at HTMLVideoElement.<anonymous> (StremioVideoSystem.ts:161:59)
-(anonymous) @ StremioVideoSystem.ts:161
-StremioVideoSystem.ts:161 Uncaught TypeError: Cannot read properties of null (reading 'buffered')
-    at HTMLVideoElement.<anonymous> (StremioVideoSystem.ts:161:59)
-(anonymous) @ StremioVideoSystem.ts:161
-StremioVideoSystem.ts:161 Uncaught TypeError: Cannot read properties of null (reading 'buffered')
-    at HTMLVideoElement.<anonymous> (StremioVideoSystem.ts:161:59)
-(anonymous) @ StremioVideoSystem.ts:161
-StremioVideoSystem.ts:161 Uncaught TypeError: Cannot read properties of null (reading 'buffered')
-    at HTMLVideoElement.<anonymous> (StremioVideoSystem.ts:161:59)
-(anonymous) @ StremioVideoSystem.ts:161
-StremioVideoSystem.ts:161 Uncaught TypeError: Cannot read properties of null (reading 'buffered')
-    at HTMLVideoElement.<anonymous> (StremioVideoSystem.ts:161:59)
-(anonymous) @ StremioVideoSystem.ts:161
-StremioVideoSystem.ts:161 Uncaught TypeError: Cannot read properties of null (reading 'buffered')
-    at HTMLVideoElement.<anonymous> (StremioVideoSystem.ts:161:59)
-(anonymous) @ StremioVideoSystem.ts:161
-StremioVideoSystem.ts:161 Uncaught TypeError: Cannot read properties of null (reading 'buffered')
-    at HTMLVideoElement.<anonymous> (StremioVideoSystem.ts:161:59)
-(anonymous) @ StremioVideoSystem.ts:161
+logger.ts:150 [2025-08-02T10:14:59.438Z] INFO  PLAYER      Creating new video element
+logger.ts:150 [2025-08-02T10:14:59.440Z] INFO  STREAM      Loading stream via load command {
+  "url": "https://sgp1-4.download.real-debrid.com/d/HVVF6Q4GWMMP6101/How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv",
+  "autoplay": false
+}
+logger.ts:150 [2025-08-02T10:14:59.440Z] INFO  STREAM      Browser codec support check {
+  "MP4 H264": "probably",
+  "MP4 H265": "probably",
+  "MKV H264": "not supported",
+  "MKV H265": "not supported"
+}
+logger.ts:150 [2025-08-02T10:14:59.440Z] INFO  STREAM      Stream needs transcoding to HLS {
+  "streamUrl": "https://sgp1-4.download.real-debrid.com/d/HVVF6Q4GWMMP6101/How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv",
+  "reason": "Browser cannot play MKV container natively"
+}
+logger.ts:150 [2025-08-02T10:14:59.440Z] INFO  STREAM      Setting direct video source {
+  "url": "https://sgp1-4.download.real-debrid.com/d/HVVF6Q4GWMMP6101/How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv"
+}
+logger.ts:150 [2025-08-02T10:14:59.440Z] INFO  STREAM      Using HLS transcoding for unsupported format {
+  "originalUrl": "https://sgp1-4.download.real-debrid.com/d/HVVF6Q4GWMMP6101/How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv",
+  "transcodingUrl": "http://localhost:6969/api/hls/j1rx3gqzufq/master.m3u8?mediaURL=https%3A%2F%2Fsgp1-4.download.real-debrid.com%2Fd%2FHVVF6Q4GWMMP6101%2FHow.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv&videoCodecs=h264&audioCodecs=aac&format=mp4",
+  "sessionId": "j1rx3gqzufq"
+}
+logger.ts:150 [2025-08-02T10:14:59.441Z] INFO  STREAM      Setting up HLS.js for transcoded stream
+logger.ts:150 [2025-08-02T10:14:59.456Z] INFO  PERFORMANCE Starting optimized buffer loading
+logger.ts:150 [2025-08-02T10:14:59.456Z] INFO  STREAM      Stream load started {
+  "originalUrl": "https://sgp1-4.download.real-debrid.com/d/HVVF6Q4GWMMP6101/How.to.Train.Your.Dragon.2025.2160p.HDR10...",
+  "actualSrc": "http://localhost:6969/api/hls/j1rx3gqzufq/master.m3u8?mediaURL=https%3A%2F%2Fsgp1-4.download.real-de...",
+  "networkState": 2,
+  "usingProxy": true
+}
+logger.ts:150 [2025-08-02T10:15:17.752Z] INFO  PLAYER      Video loadedmetadata event {
+  "duration": 30,
+  "durationFormatted": "0:30",
+  "readyState": 4,
+  "networkState": 1,
+  "preload": "auto"
+}
+logger.ts:143 [2025-08-02T10:15:29.869Z] ERROR PLAYER      Video playback error {
+  "code": 3,
+  "message": "CHUNK_DEMUXER_ERROR_APPEND_FAILED: Parsed buffers not in DTS sequence",
+  "streamUrl": "https://sgp1-4.download.real-debrid.com/d/HVVF6Q4GWMMP6101/How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv",
+  "readyState": 4,
+  "networkState": 1,
+  "isHLS": false,
+  "isTranscoding": false
+}
+log @ logger.ts:143
+StremioPlayer.tsx:110 Video error: Object
+(anonymous) @ StremioPlayer.tsx:110
+logger.ts:143 [2025-08-02T10:15:29.870Z] ERROR STREAM      Critical video load error {
+  "error": {},
+  "currentSrc": "http://localhost:6969/api/hls/j1rx3gqzufq/master.m3u8?mediaURL=https%3A%2F%2Fsgp1-4.download.real-debrid.com%2Fd%2FHVVF6Q4GWMMP6101%2FHow.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv&videoCodecs=h264&audioCodecs=aac&format=mp4",
+  "readyState": 4,
+  "networkState": 1
+}
+log @ logger.ts:143
