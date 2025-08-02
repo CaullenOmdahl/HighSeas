@@ -17,6 +17,66 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Setup automatic file logging for console output
+const setupFileLogging = async () => {
+    const logsDir = process.env.LOGS_DIR || path.join(__dirname, '../logs');
+    
+    try {
+        await fs.access(logsDir);
+    } catch {
+        await fs.mkdir(logsDir, { recursive: true });
+    }
+    
+    const date = new Date().toISOString().split('T')[0];
+    const logFile = path.join(logsDir, `server-${date}.log`);
+    
+    // Create write stream for log file
+    const { createWriteStream } = await import('fs');
+    const logStream = createWriteStream(logFile, { flags: 'a' });
+    
+    // Store original console methods
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+    
+    // Override console methods to write to both console and file
+    console.log = (...args) => {
+        const timestamp = new Date().toISOString();
+        const message = args.join(' ');
+        originalLog(...args);
+        logStream.write(`[${timestamp}] INFO  ${message}\n`);
+    };
+    
+    console.error = (...args) => {
+        const timestamp = new Date().toISOString();
+        const message = args.join(' ');
+        originalError(...args);
+        logStream.write(`[${timestamp}] ERROR ${message}\n`);
+    };
+    
+    console.warn = (...args) => {
+        const timestamp = new Date().toISOString();
+        const message = args.join(' ');
+        originalWarn(...args);
+        logStream.write(`[${timestamp}] WARN  ${message}\n`);
+    };
+    
+    // Handle process shutdown to close log stream
+    process.on('SIGTERM', () => {
+        logStream.end();
+    });
+    
+    process.on('SIGINT', () => {
+        logStream.end();
+        process.exit(0);
+    });
+};
+
+// Initialize file logging
+setupFileLogging().catch(err => {
+    console.error('Failed to setup file logging:', err);
+});
+
 const app = express();
 const PORT = process.env.PORT || 6969;
 
