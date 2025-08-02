@@ -107,14 +107,24 @@ function getContentType(stream: VideoStream): Promise<string> {
     return Promise.resolve(stream.behaviorHints.proxyHeaders.response['content-type']);
   }
 
-  return fetch(stream.url, { method: 'HEAD' })
+  return fetch(stream.url, { 
+      method: 'HEAD',
+      mode: 'no-cors' // Disable CORS to avoid blocking on Real-Debrid
+    })
     .then(function(resp) {
       if (resp.ok) {
         return resp.headers.get('content-type') || 'video/mp4';
       }
       throw new Error(resp.status + ' (' + resp.statusText + ')');
     })
-    .catch(() => 'video/mp4'); // Default fallback
+    .catch(() => {
+      // Fallback: Detect content type from URL extension
+      if (stream.url.includes('.mkv')) return 'video/x-matroska';
+      if (stream.url.includes('.avi')) return 'video/x-msvideo';
+      if (stream.url.includes('.mov')) return 'video/quicktime';
+      if (stream.url.includes('.wmv')) return 'video/x-ms-wmv';
+      return 'video/mp4'; // Default fallback
+    });
 }
 
 export class StremioHTMLVideo {
@@ -634,6 +644,11 @@ export class StremioHTMLVideo {
   private shouldTranscode(streamUrl: string, contentType?: string): boolean {
     // Always transcode MKV files - browser compatibility issues
     if (streamUrl.includes('.mkv') || contentType === 'video/x-matroska') {
+      return true;
+    }
+    
+    // Transcode files with HEVC/H.265 codec (common in filename)
+    if (streamUrl.includes('HEVC') || streamUrl.includes('x265') || streamUrl.includes('H265')) {
       return true;
     }
     
