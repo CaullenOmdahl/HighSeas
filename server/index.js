@@ -178,19 +178,13 @@ app.use((req, res, next) => {
     // Remove server information
     res.removeHeader('X-Powered-By');
     
-    // Content Security Policy - Allow streaming from trusted domains
-    res.setHeader('Content-Security-Policy', 
-        "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline'; " +
-        "style-src 'self' 'unsafe-inline'; " +
-        "img-src 'self' data: https:; " +
-        "media-src 'self' 'unsafe-inline' *.real-debrid.com https: http://localhost:* http://127.0.0.1:*; " +
-        "connect-src 'self' *.real-debrid.com https:; " +
-        "font-src 'self' data:; " +
-        "object-src 'none'; " +
-        "base-uri 'self'; " +
-        "form-action 'self';"
-    );
+    // Content Security Policy - Disabled for testing (personal use only)
+    // res.setHeader('Content-Security-Policy', 
+    //     "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: http: https:; " +
+    //     "media-src 'self' 'unsafe-inline' data: blob: http: https: *.real-debrid.com; " +
+    //     "connect-src 'self' http: https: *.real-debrid.com; " +
+    //     "object-src 'none';"
+    // );
     
     // Prevent clickjacking
     res.setHeader('X-Frame-Options', 'DENY');

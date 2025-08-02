@@ -61,7 +61,7 @@ x-casaos:
   hostname: ''
   store_app_id: highseas-streaming
   project_url: https://github.com/CaullenOmdahl/HighSeas
-  version: "1.1.7"
+  version: "1.1.8"
   envs:
     - container: REAL_DEBRID_TOKEN
       description: 
