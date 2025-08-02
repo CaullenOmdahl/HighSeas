@@ -11,7 +11,7 @@ This is a **React + TypeScript** streaming application with:
 
 ### Stremio Video Player Architecture (Critical)
 Complete implementation of Stremio's proven video player system:
-- **StremioVideoSystem** (`src/lib/video/StremioVideoSystem.ts`) - Core video player with HLS support
+- **StremioVideo** (`src/lib/video/StremioVideo.ts`) - Core video player with HLS support
 - **StremioVideoPlayer** (`src/lib/video/StremioVideoPlayer.tsx`) - React wrapper component
 - **StremioPlayer** (`src/routes/StremioPlayer.tsx`) - Full-featured player with controls
 - **Advanced Subtitles**: SRT/WebVTT parsing with real-time rendering and styling
@@ -65,7 +65,7 @@ Enhanced user experience with provider and quality selection:
 **Video Player Components**:
 - `StremioPlayer.tsx` - Main video player route with full Stremio features
 - `StremioVideoPlayer.tsx` - React wrapper for Stremio video system
-- `StremioVideoSystem.ts` - Core video player with HLS and subtitle support
+- `StremioVideo.ts` - Core video player with HLS and subtitle support
 - `Player.tsx` - Fallback basic HTML5 video player
 
 **UI Components**:
