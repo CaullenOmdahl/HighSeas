@@ -111,7 +111,7 @@ export class StremioVideoSystem {
     this.videoElement.style.width = '100%';
     this.videoElement.style.height = '100%';
     this.videoElement.style.backgroundColor = 'transparent';
-    this.videoElement.controls = true; // TEMP: Enable controls for debugging
+    this.videoElement.controls = false; // Disable native controls - using custom React controls
     this.videoElement.preload = 'auto'; // Changed from 'metadata' to 'auto' for better buffering
     this.videoElement.playsInline = true;
     // Don't set crossOrigin for Real-Debrid streams as they don't support CORS
@@ -206,15 +206,30 @@ export class StremioVideoSystem {
       if (!this.videoElement) return;
       const error = this.videoElement.error;
       if (error) {
-        logError(LogCategory.PLAYER, 'Video playback error', {
+        // Enhanced error logging for different error types
+        const errorDetails = {
           code: error.code,
           message: error.message,
-          streamUrl: this.currentStream
-        });
+          streamUrl: this.currentStream,
+          readyState: this.videoElement.readyState,
+          networkState: this.videoElement.networkState,
+          isHLS: this.currentStream?.includes('/api/hls/') || false,
+          isTranscoding: this.currentStream?.includes('/api/hls/') || false
+        };
+        
+        logError(LogCategory.PLAYER, 'Video playback error', errorDetails);
+        
+        // Provide more specific error messages
+        let errorMessage = `Video error: ${error.message}`;
+        if (this.currentStream?.includes('/api/hls/')) {
+          errorMessage = `HLS transcoding error: ${error.message} (code: ${error.code})`;
+        }
+        
         this.emit('error', {
           critical: true,
-          message: `Video error: ${error.message}`,
-          code: error.code
+          message: errorMessage,
+          code: error.code,
+          isHLS: this.currentStream?.includes('/api/hls/') || false
         });
       }
     });
@@ -809,9 +824,18 @@ export class StremioVideoSystem {
           const transcodingUrl = this.generateTranscodingUrl(this.currentStream!);
           logInfo(LogCategory.STREAM, 'Using HLS transcoding for unsupported format', { 
             originalUrl: this.currentStream,
-            transcodingUrl 
+            transcodingUrl,
+            sessionId: transcodingUrl.match(/\/api\/hls\/([^\/]+)\//)?.[1] || 'unknown'
           });
+          
+          // Important: Set src to the HLS transcoding endpoint
           videoEl.src = transcodingUrl;
+          
+          // For HLS streams, try to set up HLS.js if available
+          if (this.shouldUseHLS(transcodingUrl)) {
+            logInfo(LogCategory.STREAM, 'Setting up HLS.js for transcoded stream');
+            this.setupHLS(transcodingUrl);
+          }
         } else if (this.currentStream!.includes('real-debrid.com')) {
           // Use direct Real-Debrid connection for supported formats
           logInfo(LogCategory.STREAM, 'Using direct Real-Debrid stream (supported format)', { url: this.currentStream });

@@ -109,6 +109,14 @@ const StremioPlayer = memo(() => {
   const handleVideoError = useCallback((error: any) => {
     console.error('Video error:', error);
     
+    // Check if this is an HLS transcoding error (don't redirect for these)
+    if (streamUrl?.includes('/api/hls/')) {
+      console.warn('HLS transcoding error detected:', error);
+      setError('⚙️ Video transcoding is having issues. This may resolve automatically as the stream processes.');
+      setLoading(false);
+      return;
+    }
+    
     // Check if this is a Real-Debrid link that may have expired
     if (streamUrl?.includes('real-debrid.com') && (error.code === 4 || error.message?.includes('404') || error.message?.includes('Network error'))) {
       // If we have the original magnet and haven't exceeded retry limit, refresh the link
