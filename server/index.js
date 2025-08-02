@@ -24,15 +24,21 @@ const setupFileLogging = async () => {
     try {
         await fs.access(logsDir);
     } catch {
+        console.log(`Creating logs directory: ${logsDir}`);
         await fs.mkdir(logsDir, { recursive: true });
     }
     
     const date = new Date().toISOString().split('T')[0];
     const logFile = path.join(logsDir, `server-${date}.log`);
     
+    console.log(`Setting up server logging to: ${logFile}`);
+    
     // Create write stream for log file
     const { createWriteStream } = await import('fs');
     const logStream = createWriteStream(logFile, { flags: 'a' });
+    
+    // Test that we can write to the log file
+    logStream.write(`[${new Date().toISOString()}] INFO  Server logging initialized\n`);
     
     // Store original console methods
     const originalLog = console.log;
