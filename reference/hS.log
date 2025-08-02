@@ -1,57 +1,22 @@
-Error with Permissions-Policy header: Unrecognized feature: 'interest-cohort'.
-Error with Permissions-Policy header: Unrecognized feature: 'browsing-topics'.
-Error with Permissions-Policy header: Unrecognized feature: 'run-ad-auction'.
-Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'join-ad-interest-group'.
-StremioPlayer.tsx:60 StremioPlayer params: {id: 'tt32820897', streamUrl: 'https://sgp1-4.download.real-debrid.com/d/XLOGBHLS…y%20Castle%20Movie%20%28CAMRIP%29%20ENG%20Sub.mkv', quality: '720p', season: null, episode: null}
+StremioPlayer.tsx:60 StremioPlayer params: Object
 StremioVideoPlayer.tsx:102 StremioVideoPlayer: Initializing official HTMLVideo system
-logger.ts:150 [2025-08-02T12:17:12.625Z] INFO  STREAM      Loading stream with content type {
+logger.ts:150 [2025-08-02T17:29:37.420Z] INFO  STREAM      Loading stream with content type {
   "contentType": "video/x-matroska",
-  "url": "https://sgp1-4.download.real-debrid.com/d/XLOGBHLSNT5IK40/%5BKNY%20LEAKS%5D%20Demon%20Slayer%20-%20I..."
+  "url": "https://sgp1-4.download.real-debrid.com/d/SJVB3U3W6UCBW90/How.to.Train.Your.Dragon.2025.2160p.HDR10P..."
 }
-logger.ts:150 [2025-08-02T12:17:12.626Z] INFO  STREAM      Stream needs FFmpeg transcoding to HLS {
+logger.ts:150 [2025-08-02T17:29:37.420Z] INFO  STREAM      Stream needs FFmpeg transcoding to HLS {
   "contentType": "video/x-matroska",
   "reason": "Unsupported format or codec for browser playback"
 }
-logger.ts:150 [2025-08-02T12:17:12.626Z] INFO  STREAM      Using FFmpeg HLS transcoding {
-  "originalUrl": "https://sgp1-4.download.real-debrid.com/d/XLOGBHLSNT5IK40/%5BKNY%20LEAKS%5D%20Demon%20Slayer%20-%20I...",
-  "transcodingUrl": "http://localhost:6969/api/hls/l4korosr8lo/master.m3u8?mediaURL=https%3A%2F%2Fsgp1-4.download.real-de...",
-  "sessionId": "l4korosr8lo"
+logger.ts:150 [2025-08-02T17:29:37.420Z] INFO  STREAM      Using FFmpeg HLS transcoding {
+  "originalUrl": "https://sgp1-4.download.real-debrid.com/d/SJVB3U3W6UCBW90/How.to.Train.Your.Dragon.2025.2160p.HDR10P...",
+  "transcodingUrl": "http://localhost:6969/api/hls/fgte39m96jt/master.m3u8?mediaURL=https%3A%2F%2Fsgp1-4.download.real-de...",
+  "sessionId": "fgte39m96jt"
 }
-logger.ts:143 [2025-08-02T12:17:36.571Z] ERROR PLAYER      Video error: MEDIA_ERR_DECODE {
+logger.ts:143 [2025-08-02T17:30:09.210Z] ERROR PLAYER      Video error: MEDIA_ERR_DECODE {
   "code": 3,
   "message": "CHUNK_DEMUXER_ERROR_APPEND_FAILED: Parsed buffers not in DTS sequence"
 }
 log @ logger.ts:143
-error @ logger.ts:165
-Nu @ logger.ts:228
-onVideoError @ StremioHTMLVideo.ts:381
-videoElement.onerror @ StremioHTMLVideo.ts:197
-error
-setupEventListeners @ StremioHTMLVideo.ts:197
-sh @ StremioHTMLVideo.ts:170
-(anonymous) @ StremioVideoPlayer.tsx:105
-al @ react-dom.production.min.js:243
-Ln @ react-dom.production.min.js:285
-(anonymous) @ react-dom.production.min.js:281
-Ge @ scheduler.production.min.js:13
-ut @ scheduler.production.min.js:14
-Show 5 more frames
-Show less
-StremioPlayer.tsx:110 Video error: {critical: true, error: MediaError, type: 'MEDIA_ERR_DECODE'}
+StremioPlayer.tsx:110 Video error: Object
 (anonymous) @ StremioPlayer.tsx:110
-(anonymous) @ StremioHTMLVideo.ts:56
-emit @ StremioHTMLVideo.ts:56
-onError @ StremioHTMLVideo.ts:394
-onVideoError @ StremioHTMLVideo.ts:386
-videoElement.onerror @ StremioHTMLVideo.ts:197
-error
-setupEventListeners @ StremioHTMLVideo.ts:197
-sh @ StremioHTMLVideo.ts:170
-(anonymous) @ StremioVideoPlayer.tsx:105
-al @ react-dom.production.min.js:243
-Ln @ react-dom.production.min.js:285
-(anonymous) @ react-dom.production.min.js:281
-Ge @ scheduler.production.min.js:13
-ut @ scheduler.production.min.js:14
-Show 5 more frames
-Show less
