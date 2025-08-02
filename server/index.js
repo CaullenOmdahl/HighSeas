@@ -1181,22 +1181,25 @@ app.get('/api/hls/:sessionId/playlist.m3u8', async (req, res) => {
         
         console.log('📋 HLS Playlist request:', { sessionId });
         
-        // For now, generate a simple live playlist that points to segments
-        // In a full implementation, this would be dynamically generated as FFmpeg creates segments
+        // Generate a live streaming playlist for unlimited duration
+        // This creates segments on-demand as the player requests them
         const queryString = new URLSearchParams(req.query).toString();
+        
+        // Generate a rolling window of segments (live streaming approach)
+        let segmentList = '';
+        const windowSize = 10; // Keep 10 segments in the playlist at a time
+        
+        for (let i = 0; i < windowSize; i++) {
+            segmentList += `#EXTINF:10.0,\nsegment${i}.ts?${queryString}\n`;
+        }
+        
         const playlist = `#EXTM3U
 #EXT-X-VERSION:6
 #EXT-X-TARGETDURATION:10
 #EXT-X-MEDIA-SEQUENCE:0
-#EXT-X-PLAYLIST-TYPE:VOD
-#EXTINF:10.0,
-segment0.ts?${queryString}
-#EXTINF:10.0,
-segment1.ts?${queryString}
-#EXTINF:10.0,
-segment2.ts?${queryString}
-#EXT-X-ENDLIST
-`;
+#EXT-X-PLAYLIST-TYPE:EVENT
+${segmentList}`;
+        // Note: No #EXT-X-ENDLIST - this allows continuous streaming
         
         res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
         res.setHeader('Access-Control-Allow-Origin', '*');

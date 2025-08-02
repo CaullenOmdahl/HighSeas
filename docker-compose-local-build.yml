@@ -1,0 +1,78 @@
+# Local Build Docker Compose
+
+# Local Build Docker Compose - Builds from source instead of pulling from registry
+# Use when GHCR access is blocked or image is private
+
+services:
+  highseas:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: localhost/highseas-streaming:local
+    container_name: highseas-streaming
+    restart: unless-stopped
+    
+    ports:
+      - "6969:6969"
+    
+    environment:
+      # Required: Get your token from https://real-debrid.com/apitoken
+      - REAL_DEBRID_TOKEN=${REAL_DEBRID_TOKEN}
+      
+      # Application settings
+      - NODE_ENV=production
+      - PORT=6969
+      - BODY_SIZE_LIMIT=10mb
+      - LOG_LEVEL=info
+      - LOGS_DIR=/app/logs
+      - ENABLE_AMD_GPU=${ENABLE_AMD_GPU:-true}
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
+    
+    volumes:
+      # Data persistence
+      - highseas_data:/app/data
+      - highseas_logs:/app/logs
+      
+      # GPU access for transcoding
+      - /dev/dri:/dev/dri
+    
+    # AMD GPU device for VAAPI transcoding
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128
+    
+    # Add to video group for GPU access
+    group_add:
+      - video
+    
+    # Health monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6969/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 512M
+    
+    labels:
+      - "app.name=HighSeas"
+      - "app.description=Netflix-style streaming interface"
+      - "app.build=local"
+
+volumes:
+  highseas_data:
+    driver: local
+  highseas_logs:
+    driver: local
+
+networks:
+  default:
+    name: highseas-network
