@@ -78,10 +78,12 @@ const setupFileLogging = async () => {
     });
 };
 
-// Initialize file logging
-setupFileLogging().catch(err => {
-    console.error('Failed to setup file logging:', err);
-});
+// Main server function
+async function startServer() {
+    // Initialize file logging before anything else
+    await setupFileLogging().catch(err => {
+        console.error('Failed to setup file logging:', err);
+    });
 
 const app = express();
 const PORT = process.env.PORT || 6969;
@@ -1464,14 +1466,21 @@ app.get('/api/health', (req, res) => {
 });
 
 
-app.listen(PORT, () => {
-    console.log(`🚀 HighSeas development server running on http://localhost:${PORT}`);
-    console.log(`🔗 Real-Debrid API available at http://localhost:${PORT}/api/realdebrid`);
-    
-    if (!process.env.REAL_DEBRID_TOKEN) {
-        console.warn('⚠️  Warning: REAL_DEBRID_TOKEN not set in environment variables');
-        console.warn('   Real-Debrid integration will not work without this token');
-    } else {
-        console.log('✅ Real-Debrid token found in environment');
-    }
+    app.listen(PORT, () => {
+        console.log(`🚀 HighSeas development server running on http://localhost:${PORT}`);
+        console.log(`🔗 Real-Debrid API available at http://localhost:${PORT}/api/realdebrid`);
+        
+        if (!process.env.REAL_DEBRID_TOKEN) {
+            console.warn('⚠️  Warning: REAL_DEBRID_TOKEN not set in environment variables');
+            console.warn('   Real-Debrid integration will not work without this token');
+        } else {
+            console.log('✅ Real-Debrid token found in environment');
+        }
+    });
+}
+
+// Start the server
+startServer().catch(err => {
+    console.error('Failed to start server:', err);
+    process.exit(1);
 });
