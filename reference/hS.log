@@ -1,59 +1,48 @@
-StremioPlayer.tsx:60 StremioPlayer params: Object
-StremioVideoPlayer.tsx:102 StremioVideoPlayer: Initializing video system
-logger.ts:150 [2025-08-02T10:14:59.438Z] INFO  PLAYER      Creating new video element
-logger.ts:150 [2025-08-02T10:14:59.440Z] INFO  STREAM      Loading stream via load command {
-  "url": "https://sgp1-4.download.real-debrid.com/d/HVVF6Q4GWMMP6101/How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv",
-  "autoplay": false
+index-B8v17EVS.js:71 StremioPlayer params: Object
+index-B8v17EVS.js:71 StremioVideoPlayer: Initializing video system
+index-B8v17EVS.js:65 [2025-08-02T10:52:48.322Z] INFO  PLAYER      Creating new video element
+index-B8v17EVS.js:65 [2025-08-02T10:52:48.323Z] INFO  STREAM      Loading stream via load command {
+  "url": "https://sgp1-4.download.real-debrid.com/d/GMUOA5C6QAJ4W70/How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv",
+  "autoplay": true
 }
-logger.ts:150 [2025-08-02T10:14:59.440Z] INFO  STREAM      Browser codec support check {
+index-B8v17EVS.js:65 [2025-08-02T10:52:48.323Z] INFO  STREAM      Browser codec support check {
   "MP4 H264": "probably",
   "MP4 H265": "probably",
   "MKV H264": "not supported",
   "MKV H265": "not supported"
 }
-logger.ts:150 [2025-08-02T10:14:59.440Z] INFO  STREAM      Stream needs transcoding to HLS {
-  "streamUrl": "https://sgp1-4.download.real-debrid.com/d/HVVF6Q4GWMMP6101/How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv",
+index-B8v17EVS.js:65 [2025-08-02T10:52:48.323Z] INFO  STREAM      Stream needs transcoding to HLS {
+  "streamUrl": "https://sgp1-4.download.real-debrid.com/d/GMUOA5C6QAJ4W70/How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv",
   "reason": "Browser cannot play MKV container natively"
 }
-logger.ts:150 [2025-08-02T10:14:59.440Z] INFO  STREAM      Setting direct video source {
-  "url": "https://sgp1-4.download.real-debrid.com/d/HVVF6Q4GWMMP6101/How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv"
+index-B8v17EVS.js:65 [2025-08-02T10:52:48.323Z] INFO  STREAM      Setting direct video source {
+  "url": "https://sgp1-4.download.real-debrid.com/d/GMUOA5C6QAJ4W70/How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv"
 }
-logger.ts:150 [2025-08-02T10:14:59.440Z] INFO  STREAM      Using HLS transcoding for unsupported format {
-  "originalUrl": "https://sgp1-4.download.real-debrid.com/d/HVVF6Q4GWMMP6101/How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv",
-  "transcodingUrl": "http://localhost:6969/api/hls/j1rx3gqzufq/master.m3u8?mediaURL=https%3A%2F%2Fsgp1-4.download.real-debrid.com%2Fd%2FHVVF6Q4GWMMP6101%2FHow.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv&videoCodecs=h264&audioCodecs=aac&format=mp4",
-  "sessionId": "j1rx3gqzufq"
+index-B8v17EVS.js:65 [2025-08-02T10:52:48.323Z] INFO  STREAM      Using HLS transcoding for unsupported format {
+  "originalUrl": "https://sgp1-4.download.real-debrid.com/d/GMUOA5C6QAJ4W70/How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv",
+  "transcodingUrl": "http://localhost:6969/api/hls/8oqbvrudk6w/master.m3u8?mediaURL=https%3A%2F%2Fsgp1-4.download.real-debrid.com%2Fd%2FGMUOA5C6QAJ4W70%2FHow.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv&videoCodecs=h264&audioCodecs=aac&format=mp4"
 }
-logger.ts:150 [2025-08-02T10:14:59.441Z] INFO  STREAM      Setting up HLS.js for transcoded stream
-logger.ts:150 [2025-08-02T10:14:59.456Z] INFO  PERFORMANCE Starting optimized buffer loading
-logger.ts:150 [2025-08-02T10:14:59.456Z] INFO  STREAM      Stream load started {
-  "originalUrl": "https://sgp1-4.download.real-debrid.com/d/HVVF6Q4GWMMP6101/How.to.Train.Your.Dragon.2025.2160p.HDR10...",
-  "actualSrc": "http://localhost:6969/api/hls/j1rx3gqzufq/master.m3u8?mediaURL=https%3A%2F%2Fsgp1-4.download.real-de...",
-  "networkState": 2,
+:6969/watch/tt26743210?stream=https%3A%2F%2Fsgp1-4.download.real-debrid.com%2Fd%2FGMUOA5C6QAJ4W70%2FHow.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv&quality=4K:1 Refused to load media from 'http://localhost:6969/api/hls/8oqbvrudk6w/master.m3u8?mediaURL=https%3A%2F%2Fsgp1-4.download.real-debrid.com%2Fd%2FGMUOA5C6QAJ4W70%2FHow.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv&videoCodecs=h264&audioCodecs=aac&format=mp4' because it violates the following Content Security Policy directive: "media-src 'self' *.real-debrid.com https:".
+
+index-B8v17EVS.js:65 [2025-08-02T10:52:48.342Z] INFO  PERFORMANCE Starting optimized buffer loading
+index-B8v17EVS.js:65 [2025-08-02T10:52:48.342Z] INFO  STREAM      Stream load started {
+  "originalUrl": "https://sgp1-4.download.real-debrid.com/d/GMUOA5C6QAJ4W70/How.to.Train.Your.Dragon.2025.2160p.HDR10P...",
+  "actualSrc": "http://localhost:6969/api/hls/8oqbvrudk6w/master.m3u8?mediaURL=https%3A%2F%2Fsgp1-4.download.real-de...",
+  "networkState": 3,
   "usingProxy": true
 }
-logger.ts:150 [2025-08-02T10:15:17.752Z] INFO  PLAYER      Video loadedmetadata event {
-  "duration": 30,
-  "durationFormatted": "0:30",
-  "readyState": 4,
-  "networkState": 1,
-  "preload": "auto"
+index-B8v17EVS.js:65 [2025-08-02T10:52:48.343Z] ERROR PLAYER      Video playback error {
+  "code": 4,
+  "message": "MEDIA_ELEMENT_ERROR: Media load rejected by URL safety check",
+  "streamUrl": "https://sgp1-4.download.real-debrid.com/d/GMUOA5C6QAJ4W70/How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv"
 }
-logger.ts:143 [2025-08-02T10:15:29.869Z] ERROR PLAYER      Video playback error {
-  "code": 3,
-  "message": "CHUNK_DEMUXER_ERROR_APPEND_FAILED: Parsed buffers not in DTS sequence",
-  "streamUrl": "https://sgp1-4.download.real-debrid.com/d/HVVF6Q4GWMMP6101/How.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv",
-  "readyState": 4,
-  "networkState": 1,
-  "isHLS": false,
-  "isTranscoding": false
-}
-log @ logger.ts:143
-StremioPlayer.tsx:110 Video error: Object
-(anonymous) @ StremioPlayer.tsx:110
-logger.ts:143 [2025-08-02T10:15:29.870Z] ERROR STREAM      Critical video load error {
+log @ index-B8v17EVS.js:65
+index-B8v17EVS.js:71 Video error: Object
+(anonymous) @ index-B8v17EVS.js:71
+index-B8v17EVS.js:65 [2025-08-02T10:52:48.343Z] ERROR STREAM      Critical video load error {
   "error": {},
-  "currentSrc": "http://localhost:6969/api/hls/j1rx3gqzufq/master.m3u8?mediaURL=https%3A%2F%2Fsgp1-4.download.real-debrid.com%2Fd%2FHVVF6Q4GWMMP6101%2FHow.to.Train.Your.Dragon.2025.2160p.HDR10Plus.DV.WEBRip.6CH.x265.HEVC-PSA.mkv&videoCodecs=h264&audioCodecs=aac&format=mp4",
-  "readyState": 4,
-  "networkState": 1
+  "currentSrc": "",
+  "readyState": 0,
+  "networkState": 3
 }
-log @ logger.ts:143
+log @ index-B8v17EVS.js:65
