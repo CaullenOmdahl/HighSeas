@@ -1,13 +1,20 @@
-version: '3.8'
+# Docker Compose file for GitHub-based builds
 
-# Production Docker Compose
-# Use this with pre-built images from registry
+# GitHub-based Build Docker Compose
+# Builds directly from source code instead of using pre-built images
 
 services:
-  app:
-    image: caullen/highseas-streaming:latest
-    container_name: highseas-streaming
-    restart: unless-stopped
+  highseas-streaming:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+        - BUILD_DATE=${BUILD_DATE:-unknown}
+        - VCS_REF=${VCS_REF:-unknown}
+        - VERSION=${VERSION:-latest}
+    image: localhost/highseas-streaming:github-production
+    container_name: highseas-github-production
     ports:
       - "6969:6969"
     environment:
@@ -15,43 +22,56 @@ services:
       - PORT=6969
       - BODY_SIZE_LIMIT=10mb
       - LOG_LEVEL=info
+      - LOGS_DIR=/app/logs
       - REAL_DEBRID_TOKEN=${REAL_DEBRID_TOKEN:-}
       - ENABLE_AMD_GPU=${ENABLE_AMD_GPU:-true}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:6969,http://localhost:4173}
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
+      - highseas-logs:/app/logs
+      - /dev/dri:/dev/dri  # AMD GPU access for VAAPI
     devices:
-      - /dev/dri:/dev/dri  # AMD GPU device access for VAAPI transcoding
-    group_add:
-      - video  # Add container to video group for GPU access
+      - /dev/dri/renderD128:/dev/dri/renderD128  # AMD GPU device
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "http.get('http://localhost:6969/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6969/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 40s
+    networks:
+      - highseas-network
     labels:
-      # Traefik labels (if using reverse proxy)
-      - "traefik.enable=true"
-      - "traefik.http.routers.highseas.rule=Host(`highseas.local`)"
-      - "traefik.http.services.highseas.loadbalancer.server.port=6969"
-    # Resource limits
+      - "com.highseas.description=HighSeas Premium Streaming Server"
+      - "com.highseas.version=${VERSION:-latest}"
+      - "com.highseas.build-date=${BUILD_DATE:-unknown}"
+      - "com.highseas.vcs-ref=${VCS_REF:-unknown}"
+    # Resource limits for production
     deploy:
       resources:
         limits:
-          cpus: '2.0'
-          memory: 1G
+          cpus: '4.0'
+          memory: 2G
         reservations:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '1.0'
+          memory: 1G
     # Logging configuration
     logging:
       driver: 'json-file'
       options:
-        max-size: '10m'
-        max-file: '3'
+        max-size: '50m'
+        max-file: '5'
+
+volumes:
+  highseas-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /tmp/highseas-logs
 
 networks:
-  default:
-    name: highseas-network
+  highseas-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
