@@ -3,7 +3,6 @@ import Board from './routes/Board';
 import Discover from './routes/Discover';
 import Search from './routes/Search';
 import MetaDetails from './routes/MetaDetails';
-import Player from './routes/Player';
 import StremioPlayer from './routes/StremioPlayer';
 import Settings from './routes/Settings';
 import './App.less';
@@ -25,7 +24,6 @@ const App = () => {
           <Route path="/search" element={<Search />} />
           <Route path="/detail/:type/:id" element={<MetaDetails />} />
           <Route path="/watch/:id" element={<StremioPlayer />} />
-          <Route path="/watch-basic/:id" element={<Player />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </div>

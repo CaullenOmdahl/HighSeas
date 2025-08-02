@@ -1365,26 +1365,20 @@ app.get('/api/hls/:sessionId/segment:segmentId.ts', async (req, res) => {
                 '-keyint_min', '25', // Minimum GOP size
                 '-force_key_frames', 'expr:gte(t,n_forced*10)', // Force keyframes every 10 seconds
                 '-sc_threshold', '0',
-                '-avoid_negative_ts', 'make_zero', // Fix DTS issues
-                '-fflags', '+genpts', // Generate proper timestamps
-                // CRITICAL: Additional HEVC/HDR10+ compatibility fixes
-                '-vsync', 'cfr', // Force constant frame rate for consistent timing
-                '-async', '1', // Audio sync to prevent drift
-                '-copytb', '1', // Copy timebase to maintain precision
-                '-bsf:v', 'h264_mp4toannexb', // Convert to Annex-B format for HLS
-                '-max_delay', '5000000', // Max delay for A/V sync (5 seconds)
-                '-max_interleave_delta', '10000000', // Conservative interleaving (10ms) for stability
-                // Enhanced HEVC-specific fixes for GPU transcoding (100% FFmpeg compliant)
+                // Essential timestamp and DTS fixes (simplified approach)
+                '-avoid_negative_ts', 'make_zero',
+                '-fflags', '+genpts+igndts', // Generate pts and ignore input DTS
+                '-vsync', 'cfr', // Force constant frame rate
+                '-bsf:v', 'h264_mp4toannexb', // Convert to Annex-B for HLS
+                // Simplified HEVC/MKV specific fixes
                 ...(isHEVCContent ? [
-                    '-profile:v', 'high', // Force H.264 high profile for HEVC sources
-                    '-pix_fmt', 'yuv420p', // Force compatible pixel format  
-                    '-r', '25', // Force consistent frame rate
-                    '-start_at_zero', // Start timestamps at zero
-                    '-muxdelay', '0', // No mux delay to prevent DTS issues
-                    '-muxpreload', '0', // No mux preload
-                    '-max_muxing_queue_size', '1024', // Limit muxing queue
-                    '-fflags', '+genpts+discardcorrupt', // Enhanced timestamp handling (documented flags only)
-                    '-strict', 'experimental' // Allow experimental codecs for HEVC edge cases
+                    '-profile:v', 'high',
+                    '-pix_fmt', 'yuv420p',
+                    '-r', '25', // Force 25fps for consistency
+                    '-force_key_frames', 'expr:gte(t,n_forced*10)', // Keyframes every 10s
+                    '-x264opts', 'keyint=250:min-keyint=25:no-scenecut', // GOP structure
+                    '-muxdelay', '0',
+                    '-muxpreload', '0'
                 ] : []),
                 '-'
             ];
@@ -1404,26 +1398,20 @@ app.get('/api/hls/:sessionId/segment:segmentId.ts', async (req, res) => {
                 '-keyint_min', '25', // Minimum GOP size
                 '-force_key_frames', 'expr:gte(t,n_forced*10)', // Force keyframes every 10 seconds
                 '-sc_threshold', '0',
-                '-avoid_negative_ts', 'make_zero', // Fix DTS issues
-                '-fflags', '+genpts', // Generate proper timestamps
-                // CRITICAL: Additional HEVC/HDR10+ compatibility fixes
-                '-vsync', 'cfr', // Force constant frame rate for consistent timing
-                '-async', '1', // Audio sync to prevent drift
-                '-copytb', '1', // Copy timebase to maintain precision
-                '-bsf:v', 'h264_mp4toannexb', // Convert to Annex-B format for HLS
-                '-max_delay', '5000000', // Max delay for A/V sync (5 seconds)
-                '-max_interleave_delta', '10000000', // Conservative interleaving (10ms) for stability
-                // Enhanced HEVC-specific fixes for CPU transcoding (100% FFmpeg compliant)
+                // Essential timestamp and DTS fixes (simplified approach)
+                '-avoid_negative_ts', 'make_zero',
+                '-fflags', '+genpts+igndts', // Generate pts and ignore input DTS
+                '-vsync', 'cfr', // Force constant frame rate
+                '-bsf:v', 'h264_mp4toannexb', // Convert to Annex-B for HLS
+                // Simplified HEVC/MKV specific fixes
                 ...(isHEVCContent ? [
-                    '-profile:v', 'high', // Force H.264 high profile for HEVC sources
-                    '-pix_fmt', 'yuv420p', // Force compatible pixel format  
-                    '-r', '25', // Force consistent frame rate
-                    '-start_at_zero', // Start timestamps at zero
-                    '-muxdelay', '0', // No mux delay to prevent DTS issues
-                    '-muxpreload', '0', // No mux preload
-                    '-max_muxing_queue_size', '1024', // Limit muxing queue
-                    '-fflags', '+genpts+discardcorrupt', // Enhanced timestamp handling (documented flags only)
-                    '-strict', 'experimental' // Allow experimental codecs for HEVC edge cases
+                    '-profile:v', 'high',
+                    '-pix_fmt', 'yuv420p',
+                    '-r', '25', // Force 25fps for consistency
+                    '-force_key_frames', 'expr:gte(t,n_forced*10)', // Keyframes every 10s
+                    '-x264opts', 'keyint=250:min-keyint=25:no-scenecut', // GOP structure
+                    '-muxdelay', '0',
+                    '-muxpreload', '0'
                 ] : []),
                 '-'
             ];

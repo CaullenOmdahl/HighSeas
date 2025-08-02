@@ -1,22 +1,18 @@
 // Enhanced Player with Stremio Video Player
 // Replaces the basic HTML5 video with full Stremio capabilities
 
-import { memo, useEffect, useRef, useState, useCallback } from 'react';
+import { memo, useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import classnames from 'classnames';
 import Icon from '../stremio/components/Icon/Icon';
-import StremioVideoPlayer, { 
-  StremioVideoPlayerRef, 
-  VideoProperties, 
-  SubtitleTrack 
-} from '../lib/video/StremioVideoPlayer';
+import StremioVideoPlayer from '../lib/video/StremioVideoPlayer';
+import { SubtitleTrack } from '../lib/video';
 import styles from './Player.module.less';
 
 const StremioPlayer = memo(() => {
   const { id } = useParams<{ id?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const playerRef = useRef<StremioVideoPlayerRef>(null);
   
   // Video state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -26,7 +22,7 @@ const StremioPlayer = memo(() => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [buffering, setBuffering] = useState(false);
+  const [buffering] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Subtitle state
@@ -60,59 +56,46 @@ const StremioPlayer = memo(() => {
     console.log('StremioPlayer params:', { id, streamUrl, quality, season, episode });
   }, [id, streamUrl, quality, season, episode]);
 
-  // Handle property changes from video player
-  const handlePropChanged = useCallback((propName: keyof VideoProperties, propValue: any) => {
-    switch (propName) {
-      case 'loaded':
-        if (propValue) {
-          setLoading(false);
-        }
-        break;
-      case 'paused':
-        setIsPlaying(!propValue);
-        break;
-      case 'time':
-        if (typeof propValue === 'number') {
-          setCurrentTime(propValue / 1000); // Convert to seconds
-        }
-        break;
-      case 'duration':
-        if (typeof propValue === 'number') {
-          setDuration(propValue / 1000); // Convert to seconds
-        }
-        break;
-      case 'buffering':
-        setBuffering(!!propValue);
-        break;
-      case 'volume':
-        if (typeof propValue === 'number') {
-          setVolume(propValue);
-        }
-        break;
-      case 'muted':
-        setMuted(!!propValue);
-        break;
-      case 'playbackSpeed':
-        if (typeof propValue === 'number') {
-          setPlaybackSpeed(propValue);
-        }
-        break;
-      case 'subtitlesTracks':
-        if (Array.isArray(propValue)) {
-          setSubtitleTracks(propValue);
-        }
-        break;
-    }
+  // Handle time updates from video player
+  const handleTimeUpdate = useCallback((time: number) => {
+    setCurrentTime(time);
+  }, []);
+
+  // Handle duration changes from video player
+  const handleDurationChange = useCallback((duration: number) => {
+    setDuration(duration);
+  }, []);
+
+  // Handle play/pause events
+  const handlePlay = useCallback(() => {
+    setIsPlaying(true);
+  }, []);
+
+  const handlePause = useCallback(() => {
+    setIsPlaying(false);
+  }, []);
+
+  // Handle subtitle track loaded
+  const handleSubtitleTrackLoaded = useCallback((track: SubtitleTrack) => {
+    console.log('Subtitle track loaded:', track);
   }, []);
 
   // Handle video errors
   const handleVideoError = useCallback((error: any) => {
     console.error('Video error:', error);
     
+    // Handle transcoding failure specifically
+    if (error.code === 'TRANSCODING_FAILED') {
+      console.error('CRITICAL: Video transcoding failed for incompatible format');
+      setError(`🚫 ${error.message}\n\n💡 Try selecting a different quality (MP4 formats work best) or use a different streaming source.`);
+      setLoading(false);
+      return;
+    }
+    
     // Check if this is an HLS transcoding error (don't redirect for these)
     if (streamUrl?.includes('/api/hls/')) {
       console.warn('HLS transcoding error detected:', error);
-      setError('⚙️ Video transcoding is having issues. This may resolve automatically as the stream processes.');
+      setError('⚙️ Video transcoding failed. This video format is not compatible with your browser. Please select a different quality or source.');
       setLoading(false);
       return;
     }
@@ -384,23 +367,16 @@ const StremioPlayer = memo(() => {
     })}>
       {/* Stremio Video Player */}
       <StremioVideoPlayer
-        ref={playerRef}
-        stream={streamUrl}
-        paused={!isPlaying}
-        time={currentTime * 1000} // Convert to milliseconds
-        volume={volume}
-        muted={muted}
-        playbackSpeed={playbackSpeed}
-        subtitleTrack={subtitlesEnabled ? selectedSubtitleTrack : null}
-        subtitlesSize={subtitleSettings.size}
-        subtitlesOffset={subtitleSettings.offset}
-        subtitlesTextColor={subtitleSettings.textColor}
-        subtitlesBackgroundColor={subtitleSettings.backgroundColor}
-        subtitlesOutlineColor={subtitleSettings.outlineColor}
-        subtitlesOpacity={subtitleSettings.opacity}
-        onPropChanged={handlePropChanged}
+        stream={streamUrl ? { url: streamUrl } : undefined}
+        streamingServerURL="/api/streaming"
+        autoPlay={false}
         onError={handleVideoError}
+        onTimeUpdate={handleTimeUpdate}
+        onDurationChange={handleDurationChange}
+        onPlay={handlePlay}
+        onPause={handlePause}
         onEnded={handleVideoEnded}
+        onSubtitleTrackLoaded={handleSubtitleTrackLoaded}
         className={styles['video-player']}
       />
 

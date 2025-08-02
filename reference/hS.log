@@ -1,19 +1,19 @@
 StremioPlayer.tsx:60 StremioPlayer params: Object
 StremioVideoPlayer.tsx:102 StremioVideoPlayer: Initializing official HTMLVideo system
-logger.ts:150 [2025-08-02T17:29:37.420Z] INFO  STREAM      Loading stream with content type {
+logger.ts:150 [2025-08-02T18:10:05.013Z] INFO  STREAM      Loading stream with content type {
   "contentType": "video/x-matroska",
-  "url": "https://sgp1-4.download.real-debrid.com/d/SJVB3U3W6UCBW90/How.to.Train.Your.Dragon.2025.2160p.HDR10P..."
+  "url": "https://sgp1-4.download.real-debrid.com/d/DJKZICIBSXYZK103/How.to.Train.Your.Dragon.2025.2160p.HDR10..."
 }
-logger.ts:150 [2025-08-02T17:29:37.420Z] INFO  STREAM      Stream needs FFmpeg transcoding to HLS {
+logger.ts:150 [2025-08-02T18:10:05.013Z] INFO  STREAM      Stream needs FFmpeg transcoding to HLS {
   "contentType": "video/x-matroska",
   "reason": "Unsupported format or codec for browser playback"
 }
-logger.ts:150 [2025-08-02T17:29:37.420Z] INFO  STREAM      Using FFmpeg HLS transcoding {
-  "originalUrl": "https://sgp1-4.download.real-debrid.com/d/SJVB3U3W6UCBW90/How.to.Train.Your.Dragon.2025.2160p.HDR10P...",
-  "transcodingUrl": "http://localhost:6969/api/hls/fgte39m96jt/master.m3u8?mediaURL=https%3A%2F%2Fsgp1-4.download.real-de...",
-  "sessionId": "fgte39m96jt"
+logger.ts:150 [2025-08-02T18:10:05.014Z] INFO  STREAM      Using FFmpeg HLS transcoding {
+  "originalUrl": "https://sgp1-4.download.real-debrid.com/d/DJKZICIBSXYZK103/How.to.Train.Your.Dragon.2025.2160p.HDR10...",
+  "transcodingUrl": "http://localhost:6969/api/hls/0jmidjg2pgnj/master.m3u8?mediaURL=https%3A%2F%2Fsgp1-4.download.real-d...",
+  "sessionId": "0jmidjg2pgnj"
 }
-logger.ts:143 [2025-08-02T17:30:09.210Z] ERROR PLAYER      Video error: MEDIA_ERR_DECODE {
+logger.ts:143 [2025-08-02T18:10:24.532Z] ERROR PLAYER      Video error: MEDIA_ERR_DECODE {
   "code": 3,
   "message": "CHUNK_DEMUXER_ERROR_APPEND_FAILED: Parsed buffers not in DTS sequence"
 }

@@ -1,329 +1,287 @@
-// React Wrapper for Stremio Video Player
-// Integrates Stremio's video architecture with React - Uses official HTMLVideo reference implementation
-
-import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
-import { StremioHTMLVideo } from './StremioHTMLVideo';
-
-export interface VideoProperties {
-  stream?: string | null;
-  loaded?: boolean;
-  paused?: boolean;
-  time?: number;
-  duration?: number;
-  buffering?: boolean;
-  buffered?: TimeRanges | null;
-  audioTracks?: AudioTrack[];
-  selectedAudioTrackId?: string | null;
-  subtitlesTracks?: SubtitleTrack[];
-  selectedSubtitlesTrackId?: string | null;
-  subtitlesOffset?: number;
-  subtitlesSize?: number;
-  subtitlesTextColor?: string;
-  subtitlesBackgroundColor?: string;
-  subtitlesOutlineColor?: string;
-  subtitlesOpacity?: number;
-  volume?: number;
-  muted?: boolean;
-  playbackSpeed?: number;
-  // Additional subtitle properties
-  extraSubtitlesSize?: number;
-  extraSubtitlesOffset?: number;
-  extraSubtitlesTextColor?: string;
-  extraSubtitlesBackgroundColor?: string;
-  extraSubtitlesOutlineColor?: string;
-  extraSubtitlesOpacity?: number;
-  extraSubtitlesDelay?: number;
-}
-
-export interface AudioTrack {
-  id: string;
-  name: string;
-  language?: string;
-}
-
-export interface SubtitleTrack {
-  id: string;
-  name: string;
-  language?: string;
-  url?: string;
-  embedded?: boolean;
-}
+import React, { useEffect, useRef, useCallback } from 'react';
+import StremioVideo from './StremioVideo';
+import type { StreamProps, StremioVideoOptions, StremioVideoInstance } from './StremioVideo/StremioVideo';
 
 export interface StremioVideoPlayerProps {
-  stream?: string | null;
-  paused?: boolean;
-  time?: number;
-  volume?: number;
-  muted?: boolean;
-  playbackSpeed?: number;
-  subtitleTrack?: SubtitleTrack | null;
-  subtitlesSize?: number;
-  subtitlesOffset?: number;
-  subtitlesTextColor?: string;
-  subtitlesBackgroundColor?: string;
-  subtitlesOutlineColor?: string;
-  subtitlesOpacity?: number;
-  onPropChanged?: (propName: keyof VideoProperties, propValue: any) => void;
+  stream?: StreamProps;
+  seriesInfo?: any;
+  streamingServerURL?: string;
+  streamingServerSettings?: {
+    proxyStreamsEnabled?: boolean;
+  };
   onError?: (error: any) => void;
+  onTimeUpdate?: (time: number) => void;
+  onDurationChange?: (duration: number) => void;
+  onPlay?: () => void;
+  onPause?: () => void;
   onEnded?: () => void;
-  style?: React.CSSProperties;
+  onLoadedMetadata?: () => void;
+  onLoadStart?: () => void;
+  onSubtitleTrackLoaded?: (track: any) => void;
   className?: string;
+  style?: React.CSSProperties;
+  autoPlay?: boolean;
+  controls?: boolean;
 }
 
-export interface StremioVideoPlayerRef {
-  dispatch: (action: any) => void;
-  destroy: () => void;
-}
-
-const StremioVideoPlayer = forwardRef<StremioVideoPlayerRef, StremioVideoPlayerProps>((props, ref) => {
+/**
+ * StremioVideoPlayer - React wrapper for Stremio video system
+ * 
+ * This component provides a React interface to the Stremio video player
+ * with full support for HEVC/H.265 streaming, advanced subtitles,
+ * and server-side transcoding integration.
+ */
+export const StremioVideoPlayer: React.FC<StremioVideoPlayerProps> = ({
+  stream,
+  seriesInfo,
+  streamingServerURL,
+  streamingServerSettings,
+  onError,
+  onTimeUpdate,
+  onDurationChange,
+  onPlay,
+  onPause,
+  onEnded,
+  onLoadedMetadata,
+  onLoadStart,
+  onSubtitleTrackLoaded,
+  className,
+  style,
+  autoPlay = false
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoInstanceRef = useRef<StremioHTMLVideo | null>(null);
+  const videoPlayerRef = useRef<StremioVideoInstance | null>(null);
 
-  useImperativeHandle(ref, () => ({
-    dispatch: (action: any) => {
-      if (videoInstanceRef.current) {
-        videoInstanceRef.current.dispatch(action);
-      }
-    },
-    destroy: () => {
-      if (videoInstanceRef.current) {
-        videoInstanceRef.current.dispatch({ type: 'command', commandName: 'destroy' });
-        videoInstanceRef.current = null;
-      }
-    }
-  }));
-
-  useEffect(() => {
-    if (!containerRef.current) {
-      console.warn('StremioVideoPlayer: Container element not ready');
+  /**
+   * Initialize the Stremio video player
+   */
+  const initializePlayer = useCallback(() => {
+    if (!containerRef.current || videoPlayerRef.current) {
       return;
     }
 
-    console.log('StremioVideoPlayer: Initializing official HTMLVideo system');
-    
-    // Create Stremio HTMLVideo instance (official reference implementation)
-    videoInstanceRef.current = new StremioHTMLVideo({
-      containerElement: containerRef.current
+    try {
+      const options: StremioVideoOptions = {
+        containerElement: containerRef.current,
+        streamingServerURL,
+        streamingServerSettings
+      };
+
+      videoPlayerRef.current = new StremioVideo(options);
+
+      // Set up event listeners
+      setupEventListeners();
+
+      // Load stream if provided
+      if (stream) {
+        videoPlayerRef.current.load({ 
+          stream, 
+          seriesInfo,
+          streamingServerURL,
+          streamingServerSettings
+        });
+      }
+    } catch (error) {
+      console.error('Failed to initialize Stremio video player:', error);
+      onError?.(error);
+    }
+  }, [streamingServerURL, streamingServerSettings, stream, seriesInfo, onError]);
+
+  /**
+   * Set up event listeners for the video player
+   */
+  const setupEventListeners = useCallback(() => {
+    if (!videoPlayerRef.current) return;
+
+    const player = videoPlayerRef.current;
+
+    // Error handling
+    player.on('error', (error) => {
+      console.error('Stremio video error:', error);
+      onError?.(error);
     });
 
-    // Set up event listeners
-    if (props.onPropChanged) {
-      videoInstanceRef.current.on('propChanged', props.onPropChanged);
-    }
+    // Property value updates
+    player.on('propValue', (propName: string, propValue: any) => {
+      switch (propName) {
+        case 'time':
+          onTimeUpdate?.(propValue);
+          break;
+        case 'duration':
+          onDurationChange?.(propValue);
+          break;
+      }
+    });
 
-    if (props.onError) {
-      videoInstanceRef.current.on('error', props.onError);
-    }
+    // Property change events
+    player.on('propChanged', (propName: string, propValue: any) => {
+      switch (propName) {
+        case 'paused':
+          if (propValue) {
+            onPause?.();
+          } else {
+            onPlay?.();
+          }
+          break;
+      }
+    });
 
-    if (props.onEnded) {
-      videoInstanceRef.current.on('ended', props.onEnded);
-    }
+    // Video events
+    if (onLoadStart) player.on('loadstart', onLoadStart);
+    if (onLoadedMetadata) player.on('loadedmetadata', onLoadedMetadata);
+    if (onEnded) player.on('ended', onEnded);
 
-    // Observe all properties we care about
-    const propsToObserve: (keyof VideoProperties)[] = [
-      'loaded', 'paused', 'time', 'duration', 'buffering', 'buffered',
-      'volume', 'muted', 'playbackSpeed', 'audioTracks', 'subtitlesTracks'
-    ];
+    // Subtitle events
+    if (onSubtitleTrackLoaded) player.on('extraSubtitlesTrackLoaded', onSubtitleTrackLoaded);
 
-    propsToObserve.forEach(propName => {
-      videoInstanceRef.current?.dispatch({
-        type: 'observeProp',
-        propName
+    // Observe important properties
+    player.observeProp('time');
+    player.observeProp('duration');
+    player.observeProp('paused');
+    player.observeProp('volume');
+    player.observeProp('buffering');
+  }, [
+    onError,
+    onTimeUpdate,
+    onDurationChange,
+    onPlay,
+    onPause,
+    onEnded,
+    onLoadedMetadata,
+    onLoadStart,
+    onSubtitleTrackLoaded
+  ]);
+
+  /**
+   * Load a new stream
+   */
+  const loadStream = useCallback((newStream: StreamProps, newSeriesInfo?: any) => {
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.load({
+        stream: newStream, 
+        seriesInfo: newSeriesInfo,
+        streamingServerURL,
+        streamingServerSettings
       });
-    });
+    }
+  }, [streamingServerURL, streamingServerSettings]);
+
+  /**
+   * Play the video
+   */
+  const play = useCallback(() => {
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.setProp('paused', false);
+    }
+  }, []);
+
+  /**
+   * Pause the video
+   */
+  const pause = useCallback(() => {
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.setProp('paused', true);
+    }
+  }, []);
+
+  /**
+   * Seek to a specific time
+   */
+  const seek = useCallback((time: number) => {
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.setProp('time', time);
+    }
+  }, []);
+
+  /**
+   * Set volume
+   */
+  const setVolume = useCallback((volume: number) => {
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.setProp('volume', Math.max(0, Math.min(1, volume)));
+    }
+  }, []);
+
+  /**
+   * Set muted state
+   */
+  const setMuted = useCallback((muted: boolean) => {
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.setProp('muted', muted);
+    }
+  }, []);
+
+  /**
+   * Add subtitle tracks
+   */
+  const addSubtitleTracks = useCallback((tracks: any[]) => {
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.command('addExtraSubtitlesTracks', { tracks });
+    }
+  }, []);
+
+  /**
+   * Select subtitle track
+   */
+  const selectSubtitleTrack = useCallback((trackId: string | null) => {
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.setProp('selectedExtraSubtitlesTrackId', trackId);
+    }
+  }, []);
+
+  /**
+   * Set subtitle delay
+   */
+  const setSubtitleDelay = useCallback((delay: number) => {
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.setProp('extraSubtitlesDelay', delay);
+    }
+  }, []);
+
+  // Initialize player on mount
+  useEffect(() => {
+    initializePlayer();
 
     return () => {
-      if (videoInstanceRef.current) {
-        videoInstanceRef.current.dispatch({ type: 'command', commandName: 'destroy' });
-        videoInstanceRef.current = null;
+      if (videoPlayerRef.current) {
+        videoPlayerRef.current.destroy();
+        videoPlayerRef.current = null;
       }
     };
-  }, [props.onPropChanged, props.onError, props.onEnded]);
+  }, [initializePlayer]);
 
-  // Handle subtitle track changes - using official Stremio pattern
+  // Handle stream changes
   useEffect(() => {
-    if (!videoInstanceRef.current) return;
-
-    if (props.subtitleTrack) {
-      // Use official Stremio command pattern for subtitle selection
-      videoInstanceRef.current.dispatch({
-        type: 'setProp',
-        propName: 'selectedSubtitlesTrackId',
-        propValue: props.subtitleTrack.id
-      });
+    if (stream && videoPlayerRef.current) {
+      loadStream(stream, seriesInfo);
     }
-  }, [props.subtitleTrack]);
+  }, [stream, seriesInfo, loadStream]);
 
-  // Update video properties when props change
+  // Auto-play handling
   useEffect(() => {
-    if (!videoInstanceRef.current) return;
+    if (autoPlay && videoPlayerRef.current) {
+      // Delay auto-play to ensure video is loaded
+      const timer = setTimeout(() => {
+        play();
+      }, 100);
 
-    if (props.stream !== undefined) {
-      videoInstanceRef.current.dispatch({
-        type: 'command',
-        commandName: 'load',
-        commandArgs: {
-          stream: { url: props.stream },
-          autoplay: false
-        }
-      });
+      return () => clearTimeout(timer);
     }
-  }, [props.stream]);
-
-  useEffect(() => {
-    if (!videoInstanceRef.current) return;
-
-    if (props.paused !== undefined) {
-      if (props.paused) {
-        videoInstanceRef.current.dispatch({
-          type: 'command',
-          commandName: 'pause'
-        });
-      } else {
-        videoInstanceRef.current.dispatch({
-          type: 'command',
-          commandName: 'play'
-        });
-      }
-    }
-  }, [props.paused]);
-
-  useEffect(() => {
-    if (!videoInstanceRef.current) return;
-
-    if (props.time !== undefined) {
-      videoInstanceRef.current.dispatch({
-        type: 'command',
-        commandName: 'seek',
-        commandArgs: [props.time * 1000] // Convert to milliseconds
-      });
-    }
-  }, [props.time]);
-
-  useEffect(() => {
-    if (!videoInstanceRef.current) return;
-
-    if (props.volume !== undefined) {
-      videoInstanceRef.current.dispatch({
-        type: 'setProp',
-        propName: 'volume',
-        propValue: props.volume
-      });
-    }
-  }, [props.volume]);
-
-  useEffect(() => {
-    if (!videoInstanceRef.current) return;
-
-    if (props.muted !== undefined) {
-      videoInstanceRef.current.dispatch({
-        type: 'setProp',
-        propName: 'muted',
-        propValue: props.muted
-      });
-    }
-  }, [props.muted]);
-
-  useEffect(() => {
-    if (!videoInstanceRef.current) return;
-
-    if (props.playbackSpeed !== undefined) {
-      videoInstanceRef.current.dispatch({
-        type: 'setProp',
-        propName: 'playbackSpeed',
-        propValue: props.playbackSpeed
-      });
-    }
-  }, [props.playbackSpeed]);
-
-  // Subtitle styling properties
-  useEffect(() => {
-    if (!videoInstanceRef.current) return;
-
-    if (props.subtitlesSize !== undefined) {
-      videoInstanceRef.current.dispatch({
-        type: 'setProp',
-        propName: 'extraSubtitlesSize',
-        propValue: props.subtitlesSize
-      });
-    }
-  }, [props.subtitlesSize]);
-
-  useEffect(() => {
-    if (!videoInstanceRef.current) return;
-
-    if (props.subtitlesOffset !== undefined) {
-      videoInstanceRef.current.dispatch({
-        type: 'setProp',
-        propName: 'extraSubtitlesOffset',
-        propValue: props.subtitlesOffset
-      });
-    }
-  }, [props.subtitlesOffset]);
-
-  useEffect(() => {
-    if (!videoInstanceRef.current) return;
-
-    if (props.subtitlesTextColor !== undefined) {
-      videoInstanceRef.current.dispatch({
-        type: 'setProp',
-        propName: 'extraSubtitlesTextColor',
-        propValue: props.subtitlesTextColor
-      });
-    }
-  }, [props.subtitlesTextColor]);
-
-  useEffect(() => {
-    if (!videoInstanceRef.current) return;
-
-    if (props.subtitlesBackgroundColor !== undefined) {
-      videoInstanceRef.current.dispatch({
-        type: 'setProp',
-        propName: 'extraSubtitlesBackgroundColor',
-        propValue: props.subtitlesBackgroundColor
-      });
-    }
-  }, [props.subtitlesBackgroundColor]);
-
-  useEffect(() => {
-    if (!videoInstanceRef.current) return;
-
-    if (props.subtitlesOutlineColor !== undefined) {
-      videoInstanceRef.current.dispatch({
-        type: 'setProp',
-        propName: 'extraSubtitlesOutlineColor',
-        propValue: props.subtitlesOutlineColor
-      });
-    }
-  }, [props.subtitlesOutlineColor]);
-
-  useEffect(() => {
-    if (!videoInstanceRef.current) return;
-
-    if (props.subtitlesOpacity !== undefined) {
-      videoInstanceRef.current.dispatch({
-        type: 'setProp',
-        propName: 'extraSubtitlesOpacity',
-        propValue: props.subtitlesOpacity
-      });
-    }
-  }, [props.subtitlesOpacity]);
+  }, [autoPlay, play]);
 
   return (
     <div
       ref={containerRef}
+      className={className}
       style={{
-        position: 'relative',
         width: '100%',
         height: '100%',
+        position: 'relative',
         backgroundColor: '#000',
-        ...props.style
+        ...style
       }}
-      className={props.className}
     />
   );
-});
-
-StremioVideoPlayer.displayName = 'StremioVideoPlayer';
+};
 
 export default StremioVideoPlayer;
