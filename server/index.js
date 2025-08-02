@@ -1329,6 +1329,17 @@ app.get('/api/hls/:sessionId/segment:segmentId.ts', async (req, res) => {
         const segmentIndex = parseInt(segmentId, 10);
         const startTime = segmentIndex * 10;
         
+        // Detect HEVC/H.265 content for enhanced transcoding parameters
+        const isHEVCContent = mediaURL && (
+            mediaURL.includes('HEVC') || 
+            mediaURL.includes('x265') || 
+            mediaURL.includes('H265') || 
+            mediaURL.includes('h265') ||
+            mediaURL.includes('HDR10') ||
+            mediaURL.includes('DV') || // Dolby Vision
+            mediaURL.includes('2160p') // Often HEVC
+        );
+        
         // Determine FFmpeg args based on available hardware acceleration
         let ffmpegArgs;
         
@@ -1352,9 +1363,27 @@ app.get('/api/hls/:sessionId/segment:segmentId.ts', async (req, res) => {
                 '-sc_threshold', '0',
                 '-avoid_negative_ts', 'make_zero', // Fix DTS issues
                 '-fflags', '+genpts', // Generate proper timestamps
+                // CRITICAL: Additional HEVC/HDR10+ compatibility fixes
+                '-vsync', 'cfr', // Force constant frame rate for consistent timing
+                '-async', '1', // Audio sync to prevent drift
+                '-copytb', '1', // Copy timebase to maintain precision
+                '-bsf:v', 'h264_mp4toannexb', // Convert to Annex-B format for HLS
+                '-max_delay', '5000000', // Max delay for A/V sync (5 seconds)
+                '-max_interleave_delta', '0', // No interleaving to prevent DTS gaps
+                // Enhanced HEVC-specific fixes for GPU transcoding
+                ...(isHEVCContent ? [
+                    '-profile:v', 'high', // Force H.264 high profile for HEVC sources
+                    '-pix_fmt', 'yuv420p', // Force compatible pixel format  
+                    '-r', '25', // Force consistent frame rate
+                    '-start_at_zero', // Start timestamps at zero
+                    '-muxdelay', '0', // No mux delay to prevent DTS issues
+                    '-muxpreload', '0', // No mux preload
+                    '-max_muxing_queue_size', '1024', // Limit muxing queue
+                    '-fflags', '+genpts+discardcorrupt+igndts' // Enhanced timestamp handling
+                ] : []),
                 '-'
             ];
-            console.log('🚀 Using AMD GPU acceleration (VAAPI)');
+            console.log('🚀 Using AMD GPU acceleration (VAAPI)' + (isHEVCContent ? ' with HEVC optimizations' : ''));
         } else {
             // Fallback to CPU encoding
             ffmpegArgs = [
@@ -1372,9 +1401,27 @@ app.get('/api/hls/:sessionId/segment:segmentId.ts', async (req, res) => {
                 '-sc_threshold', '0',
                 '-avoid_negative_ts', 'make_zero', // Fix DTS issues
                 '-fflags', '+genpts', // Generate proper timestamps
+                // CRITICAL: Additional HEVC/HDR10+ compatibility fixes
+                '-vsync', 'cfr', // Force constant frame rate for consistent timing
+                '-async', '1', // Audio sync to prevent drift
+                '-copytb', '1', // Copy timebase to maintain precision
+                '-bsf:v', 'h264_mp4toannexb', // Convert to Annex-B format for HLS
+                '-max_delay', '5000000', // Max delay for A/V sync (5 seconds)
+                '-max_interleave_delta', '0', // No interleaving to prevent DTS gaps
+                // Enhanced HEVC-specific fixes for CPU transcoding
+                ...(isHEVCContent ? [
+                    '-profile:v', 'high', // Force H.264 high profile for HEVC sources
+                    '-pix_fmt', 'yuv420p', // Force compatible pixel format  
+                    '-r', '25', // Force consistent frame rate
+                    '-start_at_zero', // Start timestamps at zero
+                    '-muxdelay', '0', // No mux delay to prevent DTS issues
+                    '-muxpreload', '0', // No mux preload
+                    '-max_muxing_queue_size', '1024', // Limit muxing queue
+                    '-fflags', '+genpts+discardcorrupt+igndts' // Enhanced timestamp handling
+                ] : []),
                 '-'
             ];
-            console.log('💻 Using CPU transcoding (fallback)');
+            console.log('💻 Using CPU transcoding (fallback)' + (isHEVCContent ? ' with HEVC optimizations' : ''));
         }
         
         console.log('🛠️ Starting FFmpeg with args:', ffmpegArgs.join(' '));
