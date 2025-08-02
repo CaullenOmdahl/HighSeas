@@ -10,12 +10,13 @@ git push origin master          # Safe for development
 # Always ask for confirmation before any production-related actions
 ```
 
-### Docker Operations
+### Docker Operations (GHCR)
 ```bash
-npm run docker:build           # Build Docker image
-npm run docker:run             # Run Docker container (port 6969)
-npm run docker:up              # Docker Compose up
+npm run docker:pull            # Pull latest image from GitHub Container Registry
+npm run docker:up              # Docker Compose up (uses GHCR image)
+npm run docker:up:prod         # Production Docker Compose up
 npm run docker:down            # Docker Compose down
+npm run docker:update          # Pull latest and restart containers
 ```
 
 ### Docker Versioning & Release Workflow
@@ -38,13 +39,15 @@ git push origin master
 git push origin "v$VERSION"
 ```
 
-**Automated Docker Build Results:**
-- `caullen/highseas-streaming:v1.1.0` (exact version)
-- `caullen/highseas-streaming:1.1` (major.minor)
-- `caullen/highseas-streaming:latest` (latest release)
+**Automated Docker Build Results (GHCR):**
+- `ghcr.io/caullenomdahl/highseas:v1.2.2` (exact version)
+- `ghcr.io/caullenomdahl/highseas:1.2` (major.minor)
+- `ghcr.io/caullenomdahl/highseas:latest` (latest release)
+- `ghcr.io/caullenomdahl/highseas:master` (latest master branch)
 
 **GitHub Actions Workflow:**
-- Triggers on tags matching `v*` pattern
-- Builds AMD64-only images for stability
-- Uses semver tag extraction for proper versioning
-- Pushes to Docker Hub with multiple tag formats
+- Triggers on push to master, tags matching `v*`, and PRs
+- Builds multi-platform images (AMD64, ARM64)
+- Uses GitHub Container Registry (GHCR) for hosting
+- Automatic tagging and metadata injection
+- No external registry dependencies

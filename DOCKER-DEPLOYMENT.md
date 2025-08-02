@@ -1,6 +1,6 @@
-# 🐙 GitHub Container Registry Setup for HighSeas
+# 🐙 HighSeas Docker Deployment Guide
 
-This guide shows how to host your Docker containers on GitHub Container Registry (GHCR) instead of Docker Hub, providing better integration with your repository and access control.
+HighSeas uses GitHub Container Registry (GHCR) for hosting Docker images, providing automatic builds and seamless deployment.
 
 ## 🎯 Benefits of GHCR
 

@@ -1,20 +1,10 @@
-# Docker Compose file for GitHub-based builds
-
-# GitHub-based Build Docker Compose
-# Builds directly from source code instead of using pre-built images
+# Production Docker Compose using GitHub Container Registry
+# Pulls pre-built images from GHCR instead of building locally
 
 services:
   highseas-streaming:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - NODE_ENV=production
-        - BUILD_DATE=${BUILD_DATE:-unknown}
-        - VCS_REF=${VCS_REF:-unknown}
-        - VERSION=${VERSION:-latest}
-    image: localhost/highseas-streaming:github-production
-    container_name: highseas-github-production
+    image: ghcr.io/caullenomdahl/highseas:latest
+    container_name: highseas-production
     ports:
       - "6969:6969"
     environment:

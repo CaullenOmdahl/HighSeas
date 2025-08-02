@@ -69,39 +69,31 @@ curl -sSL https://raw.githubusercontent.com/CaullenOmdahl/HighSeas/master/deploy
 ### Option 1: Direct Docker Command
 
 ```bash
-# Pull and run the latest image
-docker pull caullen/highseas-streaming:latest
+# Pull and run the latest image from GitHub Container Registry
+docker pull ghcr.io/caullenomdahl/highseas:latest
 docker run -d \
   --name highseas-streaming \
   -p 6969:6969 \
+  -e REAL_DEBRID_TOKEN=your_token_here \
+  -v /tmp/highseas-logs:/app/logs \
   --restart unless-stopped \
-  --health-cmd="wget --no-verbose --tries=1 --spider http://localhost:6969/api/health || exit 1" \
-  --health-interval=30s \
-  caullen/highseas-streaming:latest
+  --device /dev/dri/renderD128:/dev/dri/renderD128 \
+  ghcr.io/caullenomdahl/highseas:latest
 ```
 
-### Option 2: Docker Compose
+### Option 2: Docker Compose (Recommended)
 
 ```bash
 # Clone repository and use docker-compose
 git clone https://github.com/CaullenOmdahl/HighSeas.git
 cd HighSeas
+export REAL_DEBRID_TOKEN=your_token_here
 docker-compose up -d
 ```
 
-### Option 3: Automated Script
+### Option 3: CasaOS Installation
 
-```bash
-# Download deployment script
-wget https://raw.githubusercontent.com/CaullenOmdahl/HighSeas/master/deploy.sh
-chmod +x deploy.sh
-
-# Edit the script to set your Docker Hub username
-sed -i 's/DOCKERHUB_USER="username"/DOCKERHUB_USER="caullen"/' deploy.sh
-
-# Run deployment
-./deploy.sh
-```
+Install directly from the CasaOS app store using the included `docker-compose.yml` configuration.
 
 ## 🎮 How to Use
 
