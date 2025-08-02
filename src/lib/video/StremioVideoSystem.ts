@@ -363,15 +363,13 @@ export class StremioVideoSystem {
     }
   }
 
-  private shouldTranscode(streamUrl: string | null, codecSupport: any): boolean {
+  private shouldTranscode(streamUrl: string | null): boolean {
     if (!streamUrl) return false;
     
-    // Check if MKV container with unsupported codec combination
+    // Always transcode MKV files to ensure compatibility
+    // MKV containers often have codec/subtitle compatibility issues across browsers
     if (streamUrl.includes('.mkv')) {
-      const mkvSupported = codecSupport.canPlayMkvH264 !== '' || codecSupport.canPlayMkvH265 !== '';
-      if (!mkvSupported) {
-        return true; // Transcode MKV files when browser doesn't support MKV container
-      }
+      return true; // Force transcoding for all MKV files
     }
     
     // Add other transcoding rules here (codec issues, etc.)
@@ -780,12 +778,7 @@ export class StremioVideoSystem {
         });
         
         // Check if this stream needs transcoding (Stremio approach)
-        needsTranscoding = this.shouldTranscode(this.currentStream, {
-          canPlayMkvH264,
-          canPlayMkvH265,
-          canPlayMp4H264,
-          canPlayMp4H265
-        });
+        needsTranscoding = this.shouldTranscode(this.currentStream);
         
         if (needsTranscoding) {
           logInfo(LogCategory.STREAM, 'Stream needs transcoding to HLS', {
