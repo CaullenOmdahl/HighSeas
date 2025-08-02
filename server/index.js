@@ -184,7 +184,7 @@ app.use((req, res, next) => {
         "script-src 'self' 'unsafe-inline'; " +
         "style-src 'self' 'unsafe-inline'; " +
         "img-src 'self' data: https:; " +
-        "media-src 'self' *.real-debrid.com https:; " +
+        "media-src 'self' 'unsafe-inline' *.real-debrid.com https: http://localhost:* http://127.0.0.1:*; " +
         "connect-src 'self' *.real-debrid.com https:; " +
         "font-src 'self' data:; " +
         "object-src 'none'; " +
