@@ -1,0 +1,123 @@
+version: '3.8'
+
+# HighSeas Portainer Stack Configuration
+# Deploy this stack through Portainer's web interface
+# Stack Name: highseas-streaming
+
+services:
+  highseas:
+    image: ghcr.io/caullenomdahl/highseas:latest
+    container_name: highseas-streaming
+    hostname: highseas
+    restart: unless-stopped
+    
+    ports:
+      - "${HIGHSEAS_PORT:-6969}:6969"
+    
+    environment:
+      # Required: Real-Debrid API Token
+      - REAL_DEBRID_TOKEN=${REAL_DEBRID_TOKEN}
+      
+      # Application Settings
+      - NODE_ENV=production
+      - PORT=6969
+      - BODY_SIZE_LIMIT=${BODY_SIZE_LIMIT:-10mb}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOGS_DIR=/app/logs
+      
+      # GPU Acceleration (AMD VAAPI)
+      - ENABLE_AMD_GPU=${ENABLE_AMD_GPU:-true}
+      
+      # CORS Settings (optional)
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
+    
+    volumes:
+      # Application data and logs
+      - highseas_data:/app/data
+      - highseas_logs:/app/logs
+      
+      # GPU access for hardware transcoding
+      - /dev/dri:/dev/dri
+    
+    devices:
+      # AMD GPU device for VAAPI transcoding
+      - /dev/dri/renderD128:/dev/dri/renderD128
+    
+    # Add to video group for GPU access
+    group_add:
+      - video
+    
+    # Health check for monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6969/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Resource limits (adjust based on your hardware)
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 512M
+    
+    # Logging configuration
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '3'
+    
+    # Portainer labels for better management
+    labels:
+      # Stack identification
+      - "com.docker.compose.project=highseas-streaming"
+      - "com.docker.compose.service=highseas"
+      
+      # Application metadata
+      - "app.name=HighSeas"
+      - "app.description=Netflix-style streaming interface for Stremio"
+      - "app.version=1.2.2"
+      - "app.category=Media"
+      - "app.repository=https://github.com/CaullenOmdahl/HighSeas"
+      
+      # Portainer management labels
+      - "io.portainer.accesscontrol.teams=administrators"
+      - "traefik.enable=false"
+      
+      # Service discovery labels (if using Traefik)
+      - "traefik.http.routers.highseas.rule=Host(`${HIGHSEAS_DOMAIN:-highseas.local}`)"
+      - "traefik.http.routers.highseas.tls=true"
+      - "traefik.http.services.highseas.loadbalancer.server.port=6969"
+    
+    networks:
+      - highseas_network
+      - traefik_network  # Optional: for reverse proxy
+
+volumes:
+  highseas_data:
+    driver: local
+    labels:
+      - "app.name=HighSeas"
+      - "volume.type=data"
+  
+  highseas_logs:
+    driver: local
+    labels:
+      - "app.name=HighSeas" 
+      - "volume.type=logs"
+
+networks:
+  highseas_network:
+    driver: bridge
+    labels:
+      - "app.name=HighSeas"
+  
+  # Optional: Connect to existing Traefik network
+  traefik_network:
+    external: true
+    name: traefik_network

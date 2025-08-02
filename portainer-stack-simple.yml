@@ -1,0 +1,49 @@
+version: '3.8'
+
+# HighSeas Portainer Stack - Simplified Version
+# For users who don't need advanced features
+
+services:
+  highseas:
+    image: ghcr.io/caullenomdahl/highseas:latest
+    container_name: highseas-streaming
+    restart: unless-stopped
+    
+    ports:
+      - "6969:6969"
+    
+    environment:
+      # Required: Get your token from https://real-debrid.com/apitoken
+      - REAL_DEBRID_TOKEN=${REAL_DEBRID_TOKEN}
+      
+      # Optional settings
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+      - ENABLE_AMD_GPU=true
+    
+    volumes:
+      # Data persistence
+      - highseas_data:/app/data
+      - highseas_logs:/app/logs
+      
+      # GPU access (comment out if no GPU)
+      - /dev/dri:/dev/dri
+    
+    # GPU device (comment out if no AMD GPU)
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128
+    
+    # Health monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6969/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    
+    labels:
+      - "app.name=HighSeas"
+      - "app.description=Netflix-style streaming interface"
+
+volumes:
+  highseas_data:
+  highseas_logs:
