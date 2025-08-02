@@ -33,7 +33,7 @@ x-casaos:
         **Features:**
         - Netflix-style streaming interface
         - Real-Debrid integration for premium streaming
-        - HLS transcoding for MKV file support (requires FFmpeg)
+        - FFmpeg HLS transcoding for HEVC/MKV files with AMD GPU acceleration
         - Advanced subtitle support with SRT/WebVTT parsing
         - Mobile-optimized touch controls
         - Android TV compatibility
@@ -54,7 +54,7 @@ x-casaos:
         
         **Troubleshooting:**
         - Check logs if Real-Debrid integration fails
-        - Ensure FFmpeg is working for MKV transcoding
+        - Ensure FFmpeg is working for HEVC/MKV transcoding
         - Verify network connectivity for streaming
   index: /
   scheme: http
@@ -91,6 +91,10 @@ x-casaos:
       description:
         en_us: Directory for application logs
       default: "/app/logs"
+    - container: CORS_ORIGINS
+      description:
+        en_us: CORS allowed origins (optional)
+      default: ""
   volumes:
     - container: /app/data
       description:
@@ -118,19 +122,21 @@ services:
       LOGS_DIR: /app/logs
       REAL_DEBRID_TOKEN: ${REAL_DEBRID_TOKEN:-}
       ENABLE_AMD_GPU: ${ENABLE_AMD_GPU:-true}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
     volumes:
       - /DATA/AppData/highseas-streaming/data:/app/data
       - /DATA/AppData/highseas-streaming/logs:/app/logs
     devices:
       - /dev/dri:/dev/dri
+      - /dev/dri/renderD128:/dev/dri/renderD128
     group_add:
       - video
     healthcheck:
-      test: ["CMD", "node", "-e", "http.get('http://localhost:6969/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6969/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 40s
     labels:
       - "casaos.name=HighSeas"
       - "casaos.category=Media"
