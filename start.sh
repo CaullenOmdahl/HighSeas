@@ -34,22 +34,35 @@ if [ ! -d "node_modules" ]; then
     echo ""
 fi
 
+# Create logs directory if it doesn't exist
+mkdir -p logs
+
 # Start backend server in background
 echo "🔧 Starting backend server (Express)..."
-npm start > backend.log 2>&1 &
+npm start > logs/backend-$(date +%Y-%m-%d).log 2>&1 &
 BACKEND_PID=$!
 
 # Wait a moment for backend to start
-sleep 2
+sleep 3
 
-# Check if backend started successfully
-if ! kill -0 $BACKEND_PID 2>/dev/null; then
-    echo "❌ Backend server failed to start. Check backend.log for details."
-    cat backend.log
-    exit 1
-fi
-
-echo "   ✓ Backend server running on http://localhost:6969 (PID: $BACKEND_PID)"
+# Check if backend started successfully by testing the health endpoint
+echo "🔍 Checking backend server health..."
+for i in {1..10}; do
+    if curl -s http://localhost:6969/api/health > /dev/null 2>&1; then
+        echo "   ✓ Backend server running on http://localhost:6969 (PID: $BACKEND_PID)"
+        break
+    elif [ $i -eq 10 ]; then
+        echo "❌ Backend server failed to start. Check logs/backend-$(date +%Y-%m-%d).log for details."
+        if [ -f "logs/backend-$(date +%Y-%m-%d).log" ]; then
+            echo "Recent backend logs:"
+            tail -20 "logs/backend-$(date +%Y-%m-%d).log"
+        fi
+        exit 1
+    else
+        echo "   ⏳ Waiting for backend server... (attempt $i/10)"
+        sleep 1
+    fi
+done
 
 # Start frontend server in foreground
 echo "🎨 Starting frontend server (Vite)..."
@@ -60,20 +73,18 @@ echo "   • Frontend:        http://localhost:5173"
 echo "   • Backend API:     http://localhost:6969/api"
 echo "   • Health Check:    http://localhost:6969/api/health"
 echo "   • Real-Debrid API: http://localhost:6969/api/realdebrid"
-echo "   • Video Proxy:     http://localhost:6969/api/proxy"
-echo "   • HLS Transcoding: http://localhost:6969/api/hls/{sessionId}/master.m3u8"
 echo "   • Subtitles Proxy: http://localhost:6969/api/subtitles"
-echo "   • Logging API:     http://localhost:6969/api/logs"
 echo ""
-echo "📄 Development logs will be saved to: ./logs/app-$(date +%Y-%m-%d).log"
+echo "📄 Development logs:"
+echo "   • Backend:  ./logs/backend-$(date +%Y-%m-%d).log"
+echo "   • App logs: ./logs/app-$(date +%Y-%m-%d).log"
 echo ""
 echo "💡 Tips:"
 echo "   • Press Ctrl+C to stop both servers"
-echo "   • Check logs after testing: cat logs/app-$(date +%Y-%m-%d).log"
+echo "   • Check backend logs: tail -f logs/backend-$(date +%Y-%m-%d).log"
+echo "   • Check app logs: tail -f logs/app-$(date +%Y-%m-%d).log"
 echo "   • Purge logs after debugging: rm logs/*.log"
-echo "   • Test video proxy: curl -I 'http://localhost:6969/api/proxy?url=...' "
-echo "   • Backend server logs: tail -f backend.log"
-echo "   • HLS transcoding requires FFmpeg installed (for MKV support)"
+echo "   • Test API health: curl http://localhost:6969/api/health"
 echo ""
 echo "=========================================="
 
