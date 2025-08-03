@@ -80,7 +80,11 @@ RUN mkdir -p /app/logs && chown -R highseas:nodejs /app/logs
 RUN apk add --no-cache su-exec
 
 # Create simple entrypoint that handles permissions
-COPY <<EOF /app/docker-entrypoint.sh
+# Install su-exec for user switching first
+RUN apk add --no-cache su-exec
+
+# Create simple entrypoint that handles permissions
+RUN cat > /app/docker-entrypoint.sh << 'ENTRYPOINT_SCRIPT'
 #!/bin/sh
 # Try to fix mounted directory permissions as root, then switch to user
 if [ -d "/app/logs" ]; then
@@ -99,8 +103,10 @@ if [ -d "/app/logs" ]; then
 fi
 
 # Run as highseas user
-exec su-exec highseas "\$@"
-EOF
+exec su-exec highseas "$@"
+ENTRYPOINT_SCRIPT
+
+RUN chmod +x /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
 
 # Expose port 6969
